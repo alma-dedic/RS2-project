@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="HeartForCharity.Model/HeartForCharity.Model.csproj" />
+  <Project Path="HeartForCharity.Services/HeartForCharity.Services.csproj" />
+  <Project Path="HeartForCharity.Subscriber/HeartForCharity.Subscriber.csproj" />
+  <Project Path="HeartForCharity.WebAPI/HeartForCharity.WebAPI.csproj" />
+</Solution>
