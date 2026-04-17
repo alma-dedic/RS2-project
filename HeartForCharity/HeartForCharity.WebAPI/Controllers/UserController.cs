@@ -4,6 +4,7 @@ using HeartForCharity.Model.SearchObjects;
 using HeartForCharity.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -28,9 +29,32 @@ namespace HeartForCharity.WebAPI.Controllers
         [AllowAnonymous]
         [HttpPost]
         public override async Task<UserResponse> Create([FromBody] UserInsertRequest request)
-            => await base.Create(request);
+        {
+            request.UserType = Model.Enums.UserType.User;
+            return await base.Create(request);
+        }
 
         [AllowAnonymous]
+        [HttpPost("register-organisation")]
+        public async Task<ActionResult<UserResponse>> RegisterOrganisation([FromBody] RegisterOrganisationRequest request)
+        {
+            try
+            {
+                var user = await _userService.RegisterOrganisationAsync(request);
+                return Ok(user);
+            }
+            catch (Exception ex) when (ex.Message.Contains("already"))
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch
+            {
+                return BadRequest(new { message = "Registration failed. Please try again." });
+            }
+        }
+
+        [AllowAnonymous]
+        [EnableRateLimiting("login")]
         [HttpPost("login")]
         public async Task<ActionResult<LoginResponse>> Login([FromBody] UserLoginRequest request)
         {
