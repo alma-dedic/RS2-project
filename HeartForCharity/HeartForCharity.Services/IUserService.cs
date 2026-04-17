@@ -8,6 +8,7 @@ namespace HeartForCharity.Services
     public interface IUserService : ICRUDService<UserResponse, UserSearchObject, UserInsertRequest, UserUpdateRequest>
     {
         Task<UserResponse?> AuthenticateAsync(UserLoginRequest request);
+        Task<UserResponse> RegisterOrganisationAsync(RegisterOrganisationRequest request);
         bool VerifyPassword(string password, string storedSalt, string storedHash);
         Task<string> GenerateRefreshTokenAsync(int userId);
         Task<(bool isValid, int userId)> ValidateRefreshTokenAsync(string token);

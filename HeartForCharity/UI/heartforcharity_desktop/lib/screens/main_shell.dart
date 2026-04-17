@@ -1,0 +1,244 @@
+import 'package:flutter/material.dart';
+import 'package:heartforcharity_desktop/providers/auth_provider.dart';
+import 'package:heartforcharity_desktop/screens/campaigns_screen.dart';
+import 'package:heartforcharity_desktop/screens/dashboard_screen.dart';
+import 'package:heartforcharity_desktop/screens/login_screen.dart';
+import 'package:heartforcharity_desktop/screens/volunteer_jobs_screen.dart';
+import 'package:provider/provider.dart';
+
+class MainShell extends StatefulWidget {
+  const MainShell({super.key});
+
+  @override
+  State<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends State<MainShell> {
+  int _selectedIndex = 0;
+
+  final List<_NavItem> _navItems = const [
+    _NavItem(icon: Icons.grid_view_outlined, activeIcon: Icons.grid_view, label: 'Dashboard'),
+    _NavItem(icon: Icons.volunteer_activism_outlined, activeIcon: Icons.volunteer_activism, label: 'Campaigns'),
+    _NavItem(icon: Icons.monitor_heart_outlined, activeIcon: Icons.monitor_heart, label: 'Volunteer jobs'),
+  ];
+
+  final List<Widget> _screens = [
+    const DashboardScreen(),
+    const CampaignsScreen(),
+    const VolunteerJobsScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Row(
+        children: [
+          _Sidebar(
+            navItems: _navItems,
+            selectedIndex: _selectedIndex,
+            onItemSelected: (index) => setState(() => _selectedIndex = index),
+            onLogout: _logout,
+          ),
+          Expanded(
+            child: _screens[_selectedIndex],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _logout() async {
+    await context.read<AuthProvider>().logout();
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
+  }
+}
+
+class _NavItem {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+
+  const _NavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+  });
+}
+
+class _Sidebar extends StatelessWidget {
+  final List<_NavItem> navItems;
+  final int selectedIndex;
+  final ValueChanged<int> onItemSelected;
+  final VoidCallback onLogout;
+
+  const _Sidebar({
+    required this.navItems,
+    required this.selectedIndex,
+    required this.onItemSelected,
+    required this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 240,
+      color: const Color(0xFFD1493F),
+      child: Column(
+        children: [
+          // Profile section
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 40, 20, 28),
+            child: Column(
+              children: [
+                // Avatar
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/logo.png',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => const Icon(
+                        Icons.business,
+                        size: 40,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Organisation name
+                const Text(
+                  'Humanitarian organisation',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                // See profile button
+                ElevatedButton(
+                  onPressed: () {
+                    // TODO: navigate to profile screen
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFFD1493F),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(
+                    'See profile',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Nav items
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: navItems.length,
+              itemBuilder: (context, index) {
+                final item = navItems[index];
+                final isSelected = selectedIndex == index;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _NavTile(
+                    icon: isSelected ? item.activeIcon : item.icon,
+                    label: item.label,
+                    isSelected: isSelected,
+                    onTap: () => onItemSelected(index),
+                  ),
+                );
+              },
+            ),
+          ),
+          // Logout at bottom
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: _NavTile(
+              icon: Icons.logout,
+              label: 'Logout',
+              isSelected: false,
+              onTap: onLogout,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _NavTile({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(50),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        splashColor: Colors.white24,
+        highlightColor: Colors.white12,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
+            borderRadius: BorderRadius.circular(50),
+            border: isSelected
+                ? Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5)
+                : null,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -10,10 +10,12 @@ using HeartForCharity.Services.VolunteerJobStateMachine;
 using HeartForCharity.WebAPI.Services;
 using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +64,20 @@ builder.Services.AddScoped<CompletedVolunteerJobState>();
 builder.Services.AddScoped<CancelledVolunteerJobState>();
 
 builder.Services.RegisterEasyNetQ("host=localhost;username=guest;password=guest");
+
+builder.Services.AddRateLimiter(options =>
+{
+    // Max 5 login attempts per minute per IP
+    options.AddFixedWindowLimiter("login", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 0;
+    });
+
+    options.RejectionStatusCode = 429;
+});
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
@@ -146,6 +162,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

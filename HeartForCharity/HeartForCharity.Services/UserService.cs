@@ -77,6 +77,52 @@ namespace HeartForCharity.Services
                 (entity.PasswordSalt, entity.PasswordHash) = HashPassword(request.NewPassword);
         }
 
+        public async Task<UserResponse> RegisterOrganisationAsync(RegisterOrganisationRequest request)
+        {
+            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+                throw new Exception("Username is already taken.");
+
+            if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+                throw new Exception("Email is already in use.");
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            var (salt, hash) = HashPassword(request.Password);
+
+            var user = new User
+            {
+                Username = request.Username,
+                Email = request.Email,
+                UserType = UserType.Organisation,
+                PasswordSalt = salt,
+                PasswordHash = hash,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            var profile = new OrganisationProfile
+            {
+                UserId = user.UserId,
+                Name = request.OrganisationName,
+                Description = request.Description,
+                ContactEmail = request.ContactEmail,
+                ContactPhone = request.ContactPhone,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.OrganisationProfiles.Add(profile);
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return MapToResponse(user);
+        }
+
         public async Task<UserResponse?> AuthenticateAsync(UserLoginRequest request)
         {
             var user = await _context.Users
@@ -128,6 +174,7 @@ namespace HeartForCharity.Services
                 return (false, 0);
 
             refreshToken.IsUsed = true;
+            refreshToken.IsRevoked = true;
             await _context.SaveChangesAsync();
 
             return (true, refreshToken.UserId);
