@@ -13,5 +13,7 @@ namespace HeartForCharity.Services
         Task<string> GenerateRefreshTokenAsync(int userId);
         Task<(bool isValid, int userId)> ValidateRefreshTokenAsync(string token);
         Task RevokeRefreshTokenAsync(string token);
+        Task ChangePasswordAsync(ChangePasswordRequest request);
+        Task DeactivateAccountAsync();
     }
 }

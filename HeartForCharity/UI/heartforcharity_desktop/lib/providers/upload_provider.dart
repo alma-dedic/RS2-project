@@ -13,14 +13,30 @@ class UploadProvider with ChangeNotifier {
     request.headers['Authorization'] = 'Bearer ${AuthProvider.token}';
     request.files.add(await http.MultipartFile.fromPath('file', filePath));
 
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 401) {
+      final refreshed = await AuthProvider.tryRefresh();
+      if (refreshed) {
+        final retryRequest = http.MultipartRequest('POST', url);
+        retryRequest.headers['Authorization'] = 'Bearer ${AuthProvider.token}';
+        retryRequest.files.add(await http.MultipartFile.fromPath('file', filePath));
+        streamedResponse = await retryRequest.send();
+        response = await http.Response.fromStream(streamedResponse);
+      }
+    }
 
     if (response.statusCode < 300) {
       final data = jsonDecode(response.body);
       return data['url'] as String;
     } else {
-      throw Exception('Failed to upload image.');
+      String message = 'Failed to upload image. (${response.statusCode})';
+      try {
+        final body = response.body;
+        if (body.isNotEmpty) message = '$message: $body';
+      } catch (_) {}
+      throw Exception(message);
     }
   }
 }

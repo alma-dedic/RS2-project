@@ -10,6 +10,8 @@ import 'package:heartforcharity_desktop/providers/volunteer_application_provider
 import 'package:heartforcharity_desktop/providers/review_provider.dart';
 import 'package:heartforcharity_desktop/providers/campaign_media_provider.dart';
 import 'package:heartforcharity_desktop/providers/upload_provider.dart';
+import 'package:heartforcharity_desktop/providers/dashboard_provider.dart';
+import 'package:heartforcharity_desktop/providers/report_provider.dart';
 import 'package:heartforcharity_desktop/screens/login_screen.dart';
 import 'package:heartforcharity_desktop/screens/main_shell.dart';
 import 'package:provider/provider.dart';
@@ -35,6 +37,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ReviewProvider()),
         ChangeNotifierProvider(create: (_) => CampaignMediaProvider()),
         ChangeNotifierProvider(create: (_) => UploadProvider()),
+        Provider(create: (_) => DashboardProvider()),
+        Provider(create: (_) => ReportProvider()),
       ],
       child: MaterialApp(
         title: 'HeartForCharity',

@@ -89,6 +89,51 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    final response = await http.post(
+      Uri.parse('${baseUrl}account/change-password'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      }),
+    );
+
+    if (response.statusCode >= 300) {
+      String message = 'Failed to change password.';
+      try {
+        final data = jsonDecode(response.body);
+        final errors = data['errors'] as Map<String, dynamic>?;
+        if (errors != null && errors.isNotEmpty) {
+          final first = errors.values.first;
+          if (first is List && first.isNotEmpty) message = first.first as String;
+        }
+      } catch (_) {}
+      throw Exception(message);
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    final response = await http.delete(
+      Uri.parse('${baseUrl}account/me'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode >= 300) {
+      String message = 'Failed to delete account.';
+      try {
+        final data = jsonDecode(response.body);
+        message = data['message'] ?? message;
+      } catch (_) {}
+      throw Exception(message);
+    }
+
+    await logout();
+  }
+
   Future<void> logout() async {
     final refreshToken = await _storage.read(key: 'refresh_token');
 
