@@ -38,6 +38,16 @@ namespace HeartForCharity.Services
             if (!string.IsNullOrWhiteSpace(search.Status) && Enum.TryParse<DonationStatus>(search.Status, out var status))
                 query = query.Where(d => d.Status == status);
 
+            query = search.OrderBy?.ToLower() switch
+            {
+                "amount" => search.OrderDescending
+                    ? query.OrderByDescending(d => d.Amount)
+                    : query.OrderBy(d => d.Amount),
+                _ => search.OrderDescending
+                    ? query.OrderByDescending(d => d.DonationDateTime)
+                    : query.OrderBy(d => d.DonationDateTime),
+            };
+
             return query;
         }
 

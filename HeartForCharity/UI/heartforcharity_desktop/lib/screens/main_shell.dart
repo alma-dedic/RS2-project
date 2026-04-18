@@ -16,17 +16,26 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
 
+  final List<GlobalKey<NavigatorState>> _navigatorKeys = [
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+  ];
+
   final List<_NavItem> _navItems = const [
     _NavItem(icon: Icons.grid_view_outlined, activeIcon: Icons.grid_view, label: 'Dashboard'),
     _NavItem(icon: Icons.volunteer_activism_outlined, activeIcon: Icons.volunteer_activism, label: 'Campaigns'),
     _NavItem(icon: Icons.monitor_heart_outlined, activeIcon: Icons.monitor_heart, label: 'Volunteer jobs'),
   ];
 
-  final List<Widget> _screens = [
-    const DashboardScreen(),
-    const CampaignsScreen(),
-    const VolunteerJobsScreen(),
-  ];
+  void _onNavItemSelected(int index) {
+    if (_selectedIndex == index) {
+      // Pop back to root if already on this tab
+      _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
+    } else {
+      setState(() => _selectedIndex = index);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,14 +45,28 @@ class _MainShellState extends State<MainShell> {
           _Sidebar(
             navItems: _navItems,
             selectedIndex: _selectedIndex,
-            onItemSelected: (index) => setState(() => _selectedIndex = index),
+            onItemSelected: _onNavItemSelected,
             onLogout: _logout,
           ),
           Expanded(
-            child: _screens[_selectedIndex],
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: [
+                _buildNavigator(0, const DashboardScreen()),
+                _buildNavigator(1, const CampaignsScreen()),
+                _buildNavigator(2, const VolunteerJobsScreen()),
+              ],
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildNavigator(int index, Widget root) {
+    return Navigator(
+      key: _navigatorKeys[index],
+      onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => root),
     );
   }
 

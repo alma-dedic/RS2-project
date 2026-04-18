@@ -6,6 +6,8 @@ class DonationSearchObject extends BaseSearchObject {
   final DateTime? dateFrom;
   final DateTime? dateTo;
   final String? status;
+  final String? orderBy;
+  final bool orderDescending;
 
   DonationSearchObject({
     super.fts,
@@ -18,6 +20,8 @@ class DonationSearchObject extends BaseSearchObject {
     this.dateFrom,
     this.dateTo,
     this.status,
+    this.orderBy,
+    this.orderDescending = true,
   });
 
   @override
@@ -28,5 +32,7 @@ class DonationSearchObject extends BaseSearchObject {
         if (dateFrom != null) 'dateFrom': dateFrom!.toIso8601String(),
         if (dateTo != null) 'dateTo': dateTo!.toIso8601String(),
         if (status != null) 'status': status,
+        if (orderBy != null) 'orderBy': orderBy,
+        'orderDescending': orderDescending,
       };
 }
