@@ -9,5 +9,6 @@ namespace HeartForCharity.Services
     {
         Task<VolunteerJobResponse> CompleteAsync(int id);
         Task<VolunteerJobResponse> CancelAsync(int id);
+        Task<PagedResult<VolunteerJobResponse>> GetMyAsync(VolunteerJobSearchObject search);
     }
 }

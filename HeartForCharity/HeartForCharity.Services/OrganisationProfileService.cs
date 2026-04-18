@@ -57,6 +57,21 @@ namespace HeartForCharity.Services
             };
         }
 
+        public async Task<OrganisationProfileResponse?> GetMeAsync()
+        {
+            var entity = await _context.OrganisationProfiles
+                .Include(o => o.OrganisationType)
+                .Include(o => o.Address)
+                    .ThenInclude(a => a!.City)
+                        .ThenInclude(c => c.Country)
+                .FirstOrDefaultAsync(op => op.UserId == _currentUserService.UserId);
+
+            if (entity == null)
+                throw new UserException("Organisation profile not found for current user.");
+
+            return MapToResponse(entity);
+        }
+
         protected override Task BeforeInsert(OrganisationProfile entity, OrganisationProfileInsertRequest request)
         {
             entity.UserId = _currentUserService.UserId;

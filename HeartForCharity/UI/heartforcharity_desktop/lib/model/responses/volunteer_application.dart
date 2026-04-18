@@ -4,6 +4,10 @@ class VolunteerApplication {
   final String? jobTitle;
   final int? userProfileId;
   final String? applicantName;
+  final String? email;
+  final String? phoneNumber;
+  final DateTime? dateOfBirth;
+  final String? address;
   final String? coverLetter;
   final String? resumeUrl;
   final String? status;
@@ -18,6 +22,10 @@ class VolunteerApplication {
     this.jobTitle,
     this.userProfileId,
     this.applicantName,
+    this.email,
+    this.phoneNumber,
+    this.dateOfBirth,
+    this.address,
     this.coverLetter,
     this.resumeUrl,
     this.status,
@@ -34,6 +42,10 @@ class VolunteerApplication {
         jobTitle: json['jobTitle'],
         userProfileId: json['userProfileId'],
         applicantName: json['applicantName'],
+        email: json['email'],
+        phoneNumber: json['phoneNumber'],
+        dateOfBirth: json['dateOfBirth'] != null ? DateTime.parse(json['dateOfBirth']) : null,
+        address: json['address'],
         coverLetter: json['coverLetter'],
         resumeUrl: json['resumeUrl'],
         status: json['status'],

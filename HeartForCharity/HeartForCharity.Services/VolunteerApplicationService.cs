@@ -52,7 +52,11 @@ namespace HeartForCharity.Services
         protected override IQueryable<VolunteerApplication> ApplyFilter(IQueryable<VolunteerApplication> query, VolunteerApplicationSearchObject search)
         {
             query = query.Include(va => va.VolunteerJob)
-                         .Include(va => va.UserProfile);
+                         .Include(va => va.UserProfile)
+                             .ThenInclude(up => up!.User)
+                         .Include(va => va.UserProfile)
+                             .ThenInclude(up => up!.Address)
+                                 .ThenInclude(a => a!.City);
 
             if (search.VolunteerJobId.HasValue)
                 query = query.Where(va => va.VolunteerJobId == search.VolunteerJobId);
@@ -74,9 +78,21 @@ namespace HeartForCharity.Services
                 VolunteerJobId         = entity.VolunteerJobId,
                 JobTitle               = entity.VolunteerJob?.Title ?? string.Empty,
                 UserProfileId          = entity.UserProfileId,
-                ApplicantName          = entity.UserProfile != null
+                ApplicantName   = entity.UserProfile != null
                     ? $"{entity.UserProfile.FirstName} {entity.UserProfile.LastName}"
                     : string.Empty,
+                Email           = entity.UserProfile?.User?.Email,
+                PhoneNumber     = entity.UserProfile?.PhoneNumber,
+                DateOfBirth     = entity.UserProfile?.DateOfBirth,
+                Address         = entity.UserProfile?.Address != null
+                    ? string.Join(", ", new[]
+                      {
+                          entity.UserProfile.Address.StreetName,
+                          entity.UserProfile.Address.Number,
+                          entity.UserProfile.Address.PostalCode,
+                          entity.UserProfile.Address.City?.Name
+                      }.Where(s => !string.IsNullOrWhiteSpace(s)))
+                    : null,
                 CoverLetter     = entity.CoverLetter,
                 ResumeUrl       = entity.ResumeUrl,
                 Status          = entity.Status.ToString(),

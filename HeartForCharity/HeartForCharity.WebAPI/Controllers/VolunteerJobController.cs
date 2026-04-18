@@ -29,6 +29,11 @@ namespace HeartForCharity.WebAPI.Controllers
         public override async Task<VolunteerJobResponse?> GetById(int id)
             => await base.GetById(id);
 
+        [Authorize(Roles = "Organisation")]
+        [HttpGet("my")]
+        public async Task<HeartForCharity.Model.Responses.PagedResult<VolunteerJobResponse>> GetMy([FromQuery] VolunteerJobSearchObject? search = null)
+            => await _jobService.GetMyAsync(search ?? new VolunteerJobSearchObject());
+
         [HttpPatch("{id}/complete")]
         public async Task<VolunteerJobResponse> Complete(int id)
             => await _jobService.CompleteAsync(id);

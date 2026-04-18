@@ -49,6 +49,18 @@ namespace HeartForCharity.Services
             return await state.CancelAsync(id);
         }
 
+        public async Task<PagedResult<VolunteerJobResponse>> GetMyAsync(VolunteerJobSearchObject search)
+        {
+            var orgProfile = await _context.OrganisationProfiles
+                .FirstOrDefaultAsync(op => op.UserId == _currentUserService.UserId);
+
+            if (orgProfile == null)
+                throw new UserException("Organisation profile not found for current user.");
+
+            search.OrganisationProfileId = orgProfile.OrganisationProfileId;
+            return await GetAsync(search);
+        }
+
         protected override IQueryable<VolunteerJob> ApplyFilter(IQueryable<VolunteerJob> query, VolunteerJobSearchObject search)
         {
             query = query.Include(v => v.OrganisationProfile)
@@ -68,6 +80,8 @@ namespace HeartForCharity.Services
                 query = query.Where(v => v.IsRemote == search.IsRemote);
             if (search.CityId.HasValue)
                 query = query.Where(v => v.Address != null && v.Address.CityId == search.CityId);
+
+            query = query.OrderByDescending(v => v.CreatedAt);
 
             return query;
         }

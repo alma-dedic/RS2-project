@@ -49,6 +49,18 @@ namespace HeartForCharity.Services
             return await state.CancelAsync(id);
         }
 
+        public async Task<PagedResult<CampaignResponse>> GetMyAsync(CampaignSearchObject search)
+        {
+            var orgProfile = await _context.OrganisationProfiles
+                .FirstOrDefaultAsync(op => op.UserId == _currentUserService.UserId);
+
+            if (orgProfile == null)
+                throw new UserException("Organisation profile not found for current user.");
+
+            search.OrganisationProfileId = orgProfile.OrganisationProfileId;
+            return await GetAsync(search);
+        }
+
         protected override IQueryable<Campaign> ApplyFilter(IQueryable<Campaign> query, CampaignSearchObject search)
         {
             query = query.Include(c => c.OrganisationProfile)
