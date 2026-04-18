@@ -6,5 +6,8 @@ using System.Threading.Tasks;
 
 namespace HeartForCharity.Model.SearchObjects
 {
-    public class CategorySearchObject : BaseSearchObject { }
+    public class CategorySearchObject : BaseSearchObject
+    {
+        public string? AppliesTo { get; set; }
+    }
 }

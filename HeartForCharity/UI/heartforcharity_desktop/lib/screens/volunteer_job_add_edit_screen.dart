@@ -1,49 +1,36 @@
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:heartforcharity_desktop/model/requests/campaign_insert_request.dart';
-import 'package:heartforcharity_desktop/model/requests/campaign_media_upsert_request.dart';
-import 'package:heartforcharity_desktop/model/requests/campaign_update_request.dart';
-import 'package:heartforcharity_desktop/model/responses/campaign.dart';
-import 'package:heartforcharity_desktop/model/responses/campaign_media.dart';
+import 'package:heartforcharity_desktop/model/requests/volunteer_job_insert_request.dart';
+import 'package:heartforcharity_desktop/model/requests/volunteer_job_update_request.dart';
 import 'package:heartforcharity_desktop/model/responses/category.dart';
-import 'package:heartforcharity_desktop/providers/campaign_media_provider.dart';
-import 'package:heartforcharity_desktop/providers/campaign_provider.dart';
+import 'package:heartforcharity_desktop/model/responses/volunteer_job.dart';
 import 'package:heartforcharity_desktop/providers/category_provider.dart';
-import 'package:heartforcharity_desktop/providers/upload_provider.dart';
+import 'package:heartforcharity_desktop/providers/volunteer_job_provider.dart';
 import 'package:provider/provider.dart';
 
-class CampaignAddEditScreen extends StatefulWidget {
-  final Campaign? campaign;
+class VolunteerJobAddEditScreen extends StatefulWidget {
+  final VolunteerJob? job;
 
-  const CampaignAddEditScreen({super.key, this.campaign});
+  const VolunteerJobAddEditScreen({super.key, this.job});
 
-  bool get isEdit => campaign != null;
+  bool get isEdit => job != null;
 
   @override
-  State<CampaignAddEditScreen> createState() => _CampaignAddEditScreenState();
+  State<VolunteerJobAddEditScreen> createState() => _VolunteerJobAddEditScreenState();
 }
 
-class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
+class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _targetAmountController = TextEditingController();
+  final _requirementsController = TextEditingController();
+  final _positionsController = TextEditingController();
 
   List<Category> _categories = [];
   int? _selectedCategoryId;
   DateTime? _startDate;
   DateTime? _endDate;
-
-  // Existing images loaded from backend (edit mode only)
-  List<CampaignMedia> _existingImages = [];
-  final Set<int> _removedExistingIds = {};
-
-  // New images picked from file system
-  // Each item: { 'path': String, 'isCover': bool }
-  final List<Map<String, dynamic>> _newImages = [];
-
+  bool _isRemote = false;
   bool _isLoading = false;
 
   @override
@@ -57,110 +44,43 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _targetAmountController.dispose();
+    _requirementsController.dispose();
+    _positionsController.dispose();
     super.dispose();
   }
 
   void _prefill() {
-    final c = widget.campaign!;
-    _titleController.text = c.title;
-    _descriptionController.text = c.description ?? '';
-    _targetAmountController.text = c.targetAmount == c.targetAmount.truncateToDouble()
-        ? c.targetAmount.toInt().toString()
-        : c.targetAmount.toString();
-    _selectedCategoryId = c.categoryId;
-    _startDate = c.startDate;
-    _endDate = c.endDate;
-    _existingImages = List.from(c.campaignMedias);
+    final j = widget.job!;
+    _titleController.text = j.title;
+    _descriptionController.text = j.description ?? '';
+    _requirementsController.text = j.requirements ?? '';
+    _positionsController.text = j.positionsAvailable.toString();
+    _selectedCategoryId = j.categoryId;
+    _startDate = j.startDate;
+    _endDate = j.endDate;
+    _isRemote = j.isRemote;
   }
 
   Future<void> _loadCategories() async {
     try {
       final result = await context.read<CategoryProvider>().get(
-            filter: {'retrieveAll': true, 'appliesTo': 'Campaign'},
+            filter: {'retrieveAll': true, 'appliesTo': 'VolunteerJob'},
           );
       if (mounted) setState(() => _categories = result.items);
     } catch (_) {}
   }
 
-  Future<void> _pickImages() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: true,
-    );
-    if (result == null) return;
-
-    setState(() {
-      for (final file in result.files) {
-        if (file.path != null) {
-          _newImages.add({'path': file.path!, 'isCover': false});
-        }
-      }
-      _ensureCoverSet();
-    });
-  }
-
-  void _ensureCoverSet() {
-    final hasExistingCover = _existingImages.any((m) => m.isCover && !_removedExistingIds.contains(m.campaignMediaId));
-    final hasNewCover = _newImages.any((i) => i['isCover'] == true);
-    if (!hasExistingCover && !hasNewCover && _newImages.isNotEmpty) {
-      _newImages[0]['isCover'] = true;
-    }
-  }
-
-  void _removeExistingImage(CampaignMedia media) {
-    setState(() {
-      _removedExistingIds.add(media.campaignMediaId);
-      _ensureCoverSet();
-    });
-  }
-
-  void _removeNewImage(int index) {
-    setState(() {
-      _newImages.removeAt(index);
-      _ensureCoverSet();
-    });
-  }
-
-  void _setExistingCover(CampaignMedia media) {
-    setState(() {
-      _existingImages = _existingImages.map((m) {
-        return CampaignMedia(
-          campaignMediaId: m.campaignMediaId,
-          url: m.url,
-          mediaType: m.mediaType,
-          isCover: m.campaignMediaId == media.campaignMediaId,
-        );
-      }).toList();
-      for (int i = 0; i < _newImages.length; i++) {
-        _newImages[i]['isCover'] = false;
-      }
-    });
-  }
-
-  void _setNewCover(int index) {
-    setState(() {
-      _existingImages = _existingImages.map((m) => CampaignMedia(
-            campaignMediaId: m.campaignMediaId,
-            url: m.url,
-            mediaType: m.mediaType,
-            isCover: false,
-          )).toList();
-      for (int i = 0; i < _newImages.length; i++) {
-        _newImages[i]['isCover'] = i == index;
-      }
-    });
-  }
-
   Future<void> _pickDate({required bool isStart}) async {
-    final initial = isStart ? (_startDate ?? DateTime.now()) : (_endDate ?? DateTime.now().add(const Duration(days: 30)));
+    final initial = isStart
+        ? (_startDate ?? DateTime.now())
+        : (_endDate ?? DateTime.now().add(const Duration(days: 30)));
     final picked = await showDatePicker(
       context: context,
       initialDate: initial,
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
           colorScheme: const ColorScheme.light(primary: Color(0xFFD1493F)),
         ),
         child: child!,
@@ -178,80 +98,45 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
 
     try {
-      final campaignProvider = context.read<CampaignProvider>();
-      final mediaProvider = context.read<CampaignMediaProvider>();
-      final uploadProvider = context.read<UploadProvider>();
+      final jobProvider = context.read<VolunteerJobProvider>();
+      final positions = int.parse(_positionsController.text.trim());
 
       if (widget.isEdit) {
-        final c = widget.campaign!;
-        final request = CampaignUpdateRequest(
+        final j = widget.job!;
+        final request = VolunteerJobUpdateRequest(
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
+          requirements: _requirementsController.text.trim().isEmpty ? null : _requirementsController.text.trim(),
           categoryId: _selectedCategoryId,
           startDate: _startDate,
           endDate: _endDate,
-          targetAmount: double.parse(_targetAmountController.text.trim()),
-          status: c.status,
+          isRemote: _isRemote,
+          positionsAvailable: positions,
+          status: j.status,
         );
-
-        await campaignProvider.update(c.campaignId, request.toJson());
-
-        // Delete removed existing images
-        for (final id in _removedExistingIds) {
-          await mediaProvider.delete(id);
-        }
-
-        // Update isCover on remaining existing images
-        for (final media in _existingImages) {
-          if (!_removedExistingIds.contains(media.campaignMediaId)) {
-            await mediaProvider.update(media.campaignMediaId, CampaignMediaUpsertRequest(
-              campaignId: c.campaignId,
-              url: media.url!,
-              isCover: media.isCover,
-            ).toJson());
-          }
-        }
-
-        // Upload and insert new images
-        for (final image in _newImages) {
-          final url = await uploadProvider.uploadImage(image['path'] as String);
-          await mediaProvider.insert(CampaignMediaUpsertRequest(
-            campaignId: c.campaignId,
-            url: url,
-            isCover: image['isCover'] as bool,
-          ).toJson());
-        }
+        await jobProvider.update(j.volunteerJobId, request.toJson());
       } else {
-        final request = CampaignInsertRequest(
+        final request = VolunteerJobInsertRequest(
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
+          requirements: _requirementsController.text.trim().isEmpty ? null : _requirementsController.text.trim(),
           categoryId: _selectedCategoryId,
           startDate: _startDate,
           endDate: _endDate,
-          targetAmount: double.parse(_targetAmountController.text.trim()),
+          isRemote: _isRemote,
+          positionsAvailable: positions,
         );
-
-        final campaign = await campaignProvider.insert(request.toJson());
-
-        for (final image in _newImages) {
-          final url = await uploadProvider.uploadImage(image['path'] as String);
-          await mediaProvider.insert(CampaignMediaUpsertRequest(
-            campaignId: campaign.campaignId,
-            url: url,
-            isCover: image['isCover'] as bool,
-          ).toJson());
-        }
+        await jobProvider.insert(request.toJson());
       }
 
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save campaign: $e')),
+          SnackBar(content: Text('Failed to save: $e')),
         );
       }
     } finally {
@@ -259,14 +144,13 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
     }
   }
 
-  Future<void> _completeCampaign() async {
-    final campaignProvider = context.read<CampaignProvider>();
-    final confirmed = await _confirm('Complete campaign', 'Mark this campaign as completed?');
+  Future<void> _completeJob() async {
+    final jobProvider = context.read<VolunteerJobProvider>();
+    final confirmed = await _confirm('Complete job', 'Mark this volunteer job as completed?');
     if (!confirmed) return;
-
     setState(() => _isLoading = true);
     try {
-      await campaignProvider.complete(widget.campaign!.campaignId);
+      await jobProvider.complete(widget.job!.volunteerJobId);
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -275,14 +159,13 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
     }
   }
 
-  Future<void> _cancelCampaign() async {
-    final campaignProvider = context.read<CampaignProvider>();
-    final confirmed = await _confirm('Cancel campaign', 'Are you sure you want to cancel this campaign? This cannot be undone.');
+  Future<void> _cancelJob() async {
+    final jobProvider = context.read<VolunteerJobProvider>();
+    final confirmed = await _confirm('Cancel job', 'Cancel this volunteer job? This cannot be undone.');
     if (!confirmed) return;
-
     setState(() => _isLoading = true);
     try {
-      await campaignProvider.cancel(widget.campaign!.campaignId);
+      await jobProvider.cancel(widget.job!.volunteerJobId);
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -291,14 +174,13 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
     }
   }
 
-  Future<void> _deleteCampaign() async {
-    final campaignProvider = context.read<CampaignProvider>();
-    final confirmed = await _confirm('Delete campaign', 'Permanently delete this campaign? This cannot be undone.');
+  Future<void> _deleteJob() async {
+    final jobProvider = context.read<VolunteerJobProvider>();
+    final confirmed = await _confirm('Delete job', 'Permanently delete this volunteer job? This cannot be undone.');
     if (!confirmed) return;
-
     setState(() => _isLoading = true);
     try {
-      await campaignProvider.delete(widget.campaign!.campaignId);
+      await jobProvider.delete(widget.job!.volunteerJobId);
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -314,10 +196,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
             title: Text(title),
             content: Text(message),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
-              ),
+              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
                 style: TextButton.styleFrom(foregroundColor: const Color(0xFFD1493F)),
@@ -331,8 +210,8 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isActive = widget.campaign?.status == 'Active';
-    final canDelete = isActive && (widget.campaign?.donationCount ?? 0) == 0;
+    final isActive = widget.job?.status == 'Active';
+    final canDelete = isActive && (widget.job?.positionsFilled ?? 0) == 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
@@ -349,7 +228,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                 ),
                 const Spacer(),
                 Image.asset('assets/logo.png', height: 36,
-                    errorBuilder: (context, e, s) => const SizedBox()),
+                    errorBuilder: (ctx, e, s) => const SizedBox()),
               ],
             ),
             const SizedBox(height: 12),
@@ -377,7 +256,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                         children: [
                           Center(
                             child: Text(
-                              widget.isEdit ? 'Edit campaign' : 'New campaign',
+                              widget.isEdit ? 'Edit volunteer job' : 'New volunteer job',
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -387,13 +266,13 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          _buildLabel('Campaign title'),
+                          _buildLabel('Job title'),
                           const SizedBox(height: 5),
                           TextFormField(
                             controller: _titleController,
                             enabled: !widget.isEdit || isActive,
                             maxLength: 200,
-                            decoration: _inputDecoration('Enter campaign title'),
+                            decoration: _inputDecoration('Enter job title'),
                             validator: (v) => (v == null || v.trim().isEmpty) ? 'Title is required' : null,
                           ),
                           const SizedBox(height: 12),
@@ -405,7 +284,18 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                             maxLines: 3,
                             maxLength: 4000,
                             enabled: !widget.isEdit || isActive,
-                            decoration: _inputDecoration('Enter campaign description'),
+                            decoration: _inputDecoration('Enter job description'),
+                          ),
+                          const SizedBox(height: 12),
+
+                          _buildLabel('Requirements'),
+                          const SizedBox(height: 5),
+                          TextFormField(
+                            controller: _requirementsController,
+                            maxLines: 2,
+                            maxLength: 2000,
+                            enabled: !widget.isEdit || isActive,
+                            decoration: _inputDecoration('Enter requirements (optional)'),
                           ),
                           const SizedBox(height: 12),
 
@@ -450,18 +340,18 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildLabel('Target amount (\$)'),
+                                    _buildLabel('Positions available'),
                                     const SizedBox(height: 6),
                                     TextFormField(
-                                      controller: _targetAmountController,
+                                      controller: _positionsController,
                                       enabled: !widget.isEdit || isActive,
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
-                                      decoration: _inputDecoration('0.00'),
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                      decoration: _inputDecoration('e.g. 10'),
                                       validator: (v) {
-                                        if (v == null || v.trim().isEmpty) return 'Target amount is required';
-                                        final amount = double.tryParse(v.trim());
-                                        if (amount == null || amount <= 0) return 'Must be greater than 0';
+                                        if (v == null || v.trim().isEmpty) return 'Required';
+                                        final n = int.tryParse(v.trim());
+                                        if (n == null || n <= 0) return 'Must be greater than 0';
                                         return null;
                                       },
                                     ),
@@ -483,12 +373,25 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                           ),
                           const SizedBox(height: 12),
 
-                          _buildLabel('Images'),
-                          const SizedBox(height: 8),
-                          _buildImagesSection(canEdit: !widget.isEdit || isActive),
+                          // Remote toggle
+                          Row(
+                            children: [
+                              Switch(
+                                value: _isRemote,
+                                onChanged: (!widget.isEdit || isActive)
+                                    ? (val) => setState(() => _isRemote = val)
+                                    : null,
+                                activeThumbColor: const Color(0xFFD1493F),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Remote position',
+                                style: TextStyle(fontSize: 14, color: Color(0xFF374151)),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 20),
 
-                          // Save / Cancel buttons (only shown if add mode OR active campaign)
                           if (!widget.isEdit || isActive) ...[
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
@@ -525,7 +428,6 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                             ),
                           ],
 
-                          // Edit-mode actions for Active campaigns
                           if (widget.isEdit && isActive) ...[
                             const SizedBox(height: 20),
                             const Divider(color: Color(0xFFE5E7EB)),
@@ -534,7 +436,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                               children: [
                                 Expanded(
                                   child: OutlinedButton(
-                                    onPressed: _isLoading ? null : _completeCampaign,
+                                    onPressed: _isLoading ? null : _completeJob,
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: const Color(0xFF059669),
                                       side: const BorderSide(color: Color(0xFF059669)),
@@ -547,14 +449,14 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: OutlinedButton(
-                                    onPressed: _isLoading ? null : _cancelCampaign,
+                                    onPressed: _isLoading ? null : _cancelJob,
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: const Color(0xFFEF4444),
                                       side: const BorderSide(color: Color(0xFFEF4444)),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                       padding: const EdgeInsets.symmetric(vertical: 14),
                                     ),
-                                    child: const Text('Cancel Campaign', style: TextStyle(fontWeight: FontWeight.w600)),
+                                    child: const Text('Cancel Job', style: TextStyle(fontWeight: FontWeight.w600)),
                                   ),
                                 ),
                               ],
@@ -563,28 +465,22 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                               const SizedBox(height: 12),
                               Center(
                                 child: TextButton(
-                                  onPressed: _isLoading ? null : _deleteCampaign,
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFF9CA3AF),
-                                  ),
+                                  onPressed: _isLoading ? null : _deleteJob,
+                                  style: TextButton.styleFrom(foregroundColor: const Color(0xFF9CA3AF)),
                                   child: const Text(
-                                    'Delete campaign',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      decoration: TextDecoration.underline,
-                                    ),
+                                    'Delete job',
+                                    style: TextStyle(fontSize: 13, decoration: TextDecoration.underline),
                                   ),
                                 ),
                               ),
                             ],
                           ],
 
-                          // Read-only notice for non-active campaigns
                           if (widget.isEdit && !isActive) ...[
                             const SizedBox(height: 8),
                             Center(
                               child: Text(
-                                'This campaign is ${widget.campaign!.status?.toLowerCase()} and cannot be edited.',
+                                'This job is ${widget.job!.status?.toLowerCase()} and cannot be edited.',
                                 style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
                               ),
                             ),
@@ -623,26 +519,11 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
       filled: true,
       fillColor: const Color(0xFFF9FAFB),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFD1493F), width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFEF4444)),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFD1493F), width: 1.5)),
+      errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFEF4444))),
+      focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5)),
     );
   }
 
@@ -670,7 +551,8 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                 ),
               ),
             ),
-            Icon(Icons.calendar_today_outlined, size: 18, color: onTap != null ? const Color(0xFF9CA3AF) : const Color(0xFFD1D5DB)),
+            Icon(Icons.calendar_today_outlined, size: 18,
+                color: onTap != null ? const Color(0xFF9CA3AF) : const Color(0xFFD1D5DB)),
           ],
         ),
       ),
@@ -700,157 +582,6 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
           icon: const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF9CA3AF)),
         ),
       ),
-    );
-  }
-
-  Widget _buildImagesSection({bool canEdit = true}) {
-    final visibleExisting = _existingImages.where((m) => !_removedExistingIds.contains(m.campaignMediaId)).toList();
-    final hasImages = visibleExisting.isNotEmpty || _newImages.isNotEmpty;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (hasImages) ...[
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              ...visibleExisting.map((m) => _buildExistingImageTile(m, canEdit: canEdit)),
-              ...List.generate(_newImages.length, (i) => _buildNewImageTile(i, canEdit: canEdit)),
-            ],
-          ),
-          const SizedBox(height: 12),
-        ],
-        if (canEdit)
-          OutlinedButton.icon(
-            onPressed: _pickImages,
-            icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
-            label: const Text('Upload images'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFD1493F),
-              side: const BorderSide(color: Color(0xFFD1493F)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildExistingImageTile(CampaignMedia media, {bool canEdit = true}) {
-    final isCover = media.isCover;
-
-    return Stack(
-      children: [
-        GestureDetector(
-          onTap: canEdit ? () => _setExistingCover(media) : null,
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: isCover ? const Color(0xFFD1493F) : const Color(0xFFE5E7EB),
-                width: isCover ? 2 : 1,
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(9),
-              child: Image.network(
-                media.url!,
-                fit: BoxFit.cover,
-                errorBuilder: (context, e, s) => const Icon(Icons.broken_image_outlined, color: Color(0xFF9CA3AF)),
-              ),
-            ),
-          ),
-        ),
-        if (isCover)
-          Positioned(
-            bottom: 4,
-            left: 4,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD1493F),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text('Cover', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
-            ),
-          ),
-        if (canEdit)
-          Positioned(
-            top: 4,
-            right: 4,
-            child: GestureDetector(
-              onTap: () => _removeExistingImage(media),
-              child: Container(
-                width: 22,
-                height: 22,
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                child: const Icon(Icons.close, size: 14, color: Color(0xFF374151)),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildNewImageTile(int index, {bool canEdit = true}) {
-    final image = _newImages[index];
-    final isCover = image['isCover'] == true;
-
-    return Stack(
-      children: [
-        GestureDetector(
-          onTap: canEdit ? () => _setNewCover(index) : null,
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: isCover ? const Color(0xFFD1493F) : const Color(0xFFE5E7EB),
-                width: isCover ? 2 : 1,
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(9),
-              child: Image.file(
-                File(image['path'] as String),
-                fit: BoxFit.cover,
-                errorBuilder: (context, e, s) => const Icon(Icons.broken_image_outlined, color: Color(0xFF9CA3AF)),
-              ),
-            ),
-          ),
-        ),
-        if (isCover)
-          Positioned(
-            bottom: 4,
-            left: 4,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD1493F),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text('Cover', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
-            ),
-          ),
-        if (canEdit)
-          Positioned(
-            top: 4,
-            right: 4,
-            child: GestureDetector(
-              onTap: () => _removeNewImage(index),
-              child: Container(
-                width: 22,
-                height: 22,
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                child: const Icon(Icons.close, size: 14, color: Color(0xFF374151)),
-              ),
-            ),
-          ),
-      ],
     );
   }
 }

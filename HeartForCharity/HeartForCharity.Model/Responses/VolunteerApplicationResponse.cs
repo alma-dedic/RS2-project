@@ -13,6 +13,10 @@ namespace HeartForCharity.Model.Responses
         public string JobTitle { get; set; } = null!;
         public int UserProfileId { get; set; }
         public string ApplicantName { get; set; } = null!;
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+        public string? Address { get; set; }
         public string? CoverLetter { get; set; }
         public string? ResumeUrl { get; set; }
         public string Status { get; set; } = null!;

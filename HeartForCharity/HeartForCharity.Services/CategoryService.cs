@@ -1,4 +1,5 @@
-﻿using HeartForCharity.Model.Requests;
+﻿using HeartForCharity.Model.Enums;
+using HeartForCharity.Model.Requests;
 using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
 using HeartForCharity.Services.Database;
@@ -19,6 +20,8 @@ namespace HeartForCharity.Services
         {
             if (!string.IsNullOrWhiteSpace(search.FTS))
                 query = query.Where(c => c.Name.Contains(search.FTS));
+            if (!string.IsNullOrWhiteSpace(search.AppliesTo) && Enum.TryParse<CategoryAppliesTo>(search.AppliesTo, out var appliesTo))
+                query = query.Where(c => c.AppliesTo == appliesTo || c.AppliesTo == CategoryAppliesTo.Both);
             return query;
         }
     }

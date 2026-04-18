@@ -23,6 +23,11 @@ namespace HeartForCharity.WebAPI.Controllers
         public override async Task<HeartForCharity.Model.Responses.PagedResult<CampaignResponse>> Get([FromQuery] CampaignSearchObject? search = null)
             => await base.Get(search);
 
+        [Authorize(Roles = "Organisation")]
+        [HttpGet("my")]
+        public async Task<HeartForCharity.Model.Responses.PagedResult<CampaignResponse>> GetMy([FromQuery] CampaignSearchObject? search = null)
+            => await _campaignService.GetMyAsync(search ?? new CampaignSearchObject());
+
         [AllowAnonymous]
         [HttpGet("{id}")]
         public override async Task<CampaignResponse?> GetById(int id)

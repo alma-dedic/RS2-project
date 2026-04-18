@@ -11,12 +11,22 @@ namespace HeartForCharity.WebAPI.Controllers
     [Route("api/[controller]")]
     public class OrganisationProfileController : BaseCRUDController<OrganisationProfileResponse, OrganisationProfileSearchObject, OrganisationProfileInsertRequest, OrganisationProfileUpdateRequest>
     {
-        public OrganisationProfileController(IOrganisationProfileService service) : base(service) { }
+        private readonly IOrganisationProfileService _orgService;
+
+        public OrganisationProfileController(IOrganisationProfileService service) : base(service)
+        {
+            _orgService = service;
+        }
 
         [AllowAnonymous]
         [HttpGet("")]
         public override async Task<HeartForCharity.Model.Responses.PagedResult<OrganisationProfileResponse>> Get([FromQuery] OrganisationProfileSearchObject? search = null)
             => await base.Get(search);
+
+        [Authorize(Roles = "Organisation")]
+        [HttpGet("me")]
+        public async Task<OrganisationProfileResponse?> GetMe()
+            => await _orgService.GetMeAsync();
 
         [AllowAnonymous]
         [HttpGet("{id}")]

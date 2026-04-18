@@ -77,7 +77,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
         includeTotalCount: true,
       );
 
-      final result = await provider.get(filter: filter.toMap());
+      final result = await provider.getMy(filter: filter.toMap());
 
       if (mounted) {
         setState(() {
