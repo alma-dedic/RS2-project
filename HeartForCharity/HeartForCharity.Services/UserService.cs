@@ -1,4 +1,5 @@
 using HeartForCharity.Model.Enums;
+using HeartForCharity.Model.Exceptions;
 using HeartForCharity.Model.Requests;
 using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
@@ -15,7 +16,13 @@ namespace HeartForCharity.Services
 {
     public class UserService : BaseCRUDService<UserResponse, UserSearchObject, User, UserInsertRequest, UserUpdateRequest>, IUserService
     {
-        public UserService(HeartForCharityDbContext context, IMapper mapper) : base(context, mapper) { }
+        private readonly ICurrentUserService _currentUserService;
+
+        public UserService(HeartForCharityDbContext context, IMapper mapper, ICurrentUserService currentUserService)
+            : base(context, mapper)
+        {
+            _currentUserService = currentUserService;
+        }
 
         protected override IQueryable<User> ApplyFilter(IQueryable<User> query, UserSearchObject search)
         {
@@ -190,6 +197,51 @@ namespace HeartForCharity.Services
                 refreshToken.IsRevoked = true;
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task ChangePasswordAsync(ChangePasswordRequest request)
+        {
+            var user = await _context.Users.FindAsync(_currentUserService.UserId);
+            if (user == null)
+                throw new UserException("User not found.");
+
+            if (!VerifyPassword(request.CurrentPassword, user.PasswordSalt, user.PasswordHash))
+                throw new UserException("Current password is incorrect.");
+
+            (user.PasswordSalt, user.PasswordHash) = HashPassword(request.NewPassword);
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeactivateAccountAsync()
+        {
+            var user = await _context.Users.FindAsync(_currentUserService.UserId);
+            if (user == null)
+                throw new UserException("User not found.");
+
+            var orgProfile = await _context.OrganisationProfiles
+                .FirstOrDefaultAsync(op => op.UserId == _currentUserService.UserId);
+
+            if (orgProfile != null)
+            {
+                var hasActiveCampaigns = await _context.Campaigns
+                    .AnyAsync(c => c.OrganisationProfileId == orgProfile.OrganisationProfileId
+                                && c.Status == CampaignStatus.Active);
+
+                if (hasActiveCampaigns)
+                    throw new UserException("Cannot delete account with active campaigns. Please complete or cancel them first.");
+
+                var hasActiveJobs = await _context.VolunteerJobs
+                    .AnyAsync(j => j.OrganisationProfileId == orgProfile.OrganisationProfileId
+                                && j.Status == VolunteerJobStatus.Active);
+
+                if (hasActiveJobs)
+                    throw new UserException("Cannot delete account with active volunteer jobs. Please complete or cancel them first.");
+            }
+
+            user.IsActive = false;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
         }
 
         private static (string salt, string hash) HashPassword(string password)

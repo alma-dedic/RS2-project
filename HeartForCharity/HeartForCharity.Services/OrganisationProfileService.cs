@@ -4,8 +4,10 @@ using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
 using HeartForCharity.Services.Database;
 using MapsterMapper;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -14,11 +16,13 @@ namespace HeartForCharity.Services
     public class OrganisationProfileService : BaseCRUDService<OrganisationProfileResponse, OrganisationProfileSearchObject, OrganisationProfile, OrganisationProfileInsertRequest, OrganisationProfileUpdateRequest>, IOrganisationProfileService
     {
         private readonly ICurrentUserService _currentUserService;
+        private readonly IWebHostEnvironment _env;
 
-        public OrganisationProfileService(HeartForCharityDbContext context, IMapper mapper, ICurrentUserService currentUserService)
+        public OrganisationProfileService(HeartForCharityDbContext context, IMapper mapper, ICurrentUserService currentUserService, IWebHostEnvironment env)
             : base(context, mapper)
         {
             _currentUserService = currentUserService;
+            _env = env;
         }
 
         protected override IQueryable<OrganisationProfile> ApplyFilter(IQueryable<OrganisationProfile> query, OrganisationProfileSearchObject search)
@@ -86,8 +90,23 @@ namespace HeartForCharity.Services
             if (entity.UserId != _currentUserService.UserId)
                 throw new ForbiddenException("You can only edit your own organisation profile.");
 
+            if (entity.LogoUrl != null
+                && entity.LogoUrl != request.LogoUrl
+                && entity.LogoUrl.Contains("/uploads/"))
+            {
+                DeleteUploadedFile(entity.LogoUrl);
+            }
+
             entity.UpdatedAt = DateTime.UtcNow;
             return Task.CompletedTask;
+        }
+
+        private void DeleteUploadedFile(string url)
+        {
+            var fileName = Path.GetFileName(url);
+            var path = Path.Combine(_env.WebRootPath, "uploads", fileName);
+            if (File.Exists(path))
+                File.Delete(path);
         }
 
         protected override Task BeforeDelete(OrganisationProfile entity)

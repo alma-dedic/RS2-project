@@ -4,7 +4,9 @@ using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
 using HeartForCharity.Services.Database;
 using MapsterMapper;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,11 +15,13 @@ namespace HeartForCharity.Services
     public class CampaignMediaService : BaseCRUDService<CampaignMediaResponse, CampaignMediaSearchObject, CampaignMedia, CampaignMediaUpsertRequest, CampaignMediaUpsertRequest>, ICampaignMediaService
     {
         private readonly ICurrentUserService _currentUserService;
+        private readonly IWebHostEnvironment _env;
 
-        public CampaignMediaService(HeartForCharityDbContext context, IMapper mapper, ICurrentUserService currentUserService)
+        public CampaignMediaService(HeartForCharityDbContext context, IMapper mapper, ICurrentUserService currentUserService, IWebHostEnvironment env)
             : base(context, mapper)
         {
             _currentUserService = currentUserService;
+            _env = env;
         }
 
         protected override IQueryable<CampaignMedia> ApplyFilter(IQueryable<CampaignMedia> query, CampaignMediaSearchObject search)
@@ -40,6 +44,14 @@ namespace HeartForCharity.Services
         protected override async Task BeforeDelete(CampaignMedia entity)
         {
             await VerifyCampaignOwnership(entity.CampaignId);
+
+            if (entity.Url != null && entity.Url.Contains("/uploads/"))
+            {
+                var fileName = Path.GetFileName(entity.Url);
+                var path = Path.Combine(_env.WebRootPath, "uploads", fileName);
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
         }
 
         private async Task VerifyCampaignOwnership(int campaignId)

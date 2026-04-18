@@ -42,6 +42,8 @@ builder.Services.AddScoped<IVolunteerApplicationService, VolunteerApplicationSer
 builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IVolunteerSkillService, VolunteerSkillService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // Volunteer application state machine
@@ -148,6 +150,8 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 var app = builder.Build();
 
