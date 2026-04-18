@@ -67,6 +67,8 @@ namespace HeartForCharity.Services
             if (search.OrganisationProfileId.HasValue)
                 query = query.Where(c => c.OrganisationProfileId == search.OrganisationProfileId);
 
+            query = query.OrderByDescending(c => c.CreatedAt);
+
             return query;
         }
 
@@ -136,6 +138,10 @@ namespace HeartForCharity.Services
 
             if (entity.Status != CampaignStatus.Active)
                 throw new UserException("You can only delete active campaigns.");
+
+            var donationCount = await _context.Donations.CountAsync(d => d.CampaignId == entity.CampaignId);
+            if (donationCount > 0)
+                throw new UserException("Cannot delete a campaign that has donations.");
         }
     }
 }
