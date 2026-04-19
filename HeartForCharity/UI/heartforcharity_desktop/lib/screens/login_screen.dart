@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:heartforcharity_desktop/providers/auth_provider.dart';
+import 'package:heartforcharity_desktop/screens/admin_shell.dart';
 import 'package:heartforcharity_desktop/screens/main_shell.dart';
 import 'package:heartforcharity_desktop/screens/register_screen.dart';
 import 'package:provider/provider.dart';
@@ -46,8 +47,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (success) {
         final type = AuthProvider.userType;
         if (type == 'Organisation' || type == 'Admin') {
+          final shell = type == 'Admin' ? const AdminShell() : const MainShell();
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const MainShell()),
+            MaterialPageRoute(builder: (_) => shell),
           );
         } else {
           await context.read<AuthProvider>().logout();
