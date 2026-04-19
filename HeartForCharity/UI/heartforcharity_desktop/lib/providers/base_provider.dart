@@ -104,7 +104,7 @@ abstract class BaseProvider<T> with ChangeNotifier {
     return isValidResponse(response);
   }
 
-  T fromJson(data) {
+  T fromJson(dynamic data) {
     throw Exception('Method not implemented');
   }
 

@@ -146,7 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String? confirmError;
     bool isSaving = false;
 
-    String? _validateNew(String val) {
+    String? validateNew(String val) {
       if (val.isEmpty) return 'New password is required.';
       if (val.length < 8) return 'Must be at least 8 characters.';
       if (!RegExp(r'[A-Z]').hasMatch(val)) return 'Must contain an uppercase letter.';
@@ -157,7 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return null;
     }
 
-    String? _validateConfirm(String val) {
+    String? validateConfirm(String val) {
       if (val.isEmpty) return 'Please confirm your new password.';
       if (val != newCtrl.text) return 'Passwords do not match.';
       return null;
@@ -199,7 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onToggle: () => setDialogState(() => obscureCurrent = !obscureCurrent),
                     onChanged: (_) => setDialogState(() {
                       currentError = null;
-                      newError = _validateNew(newCtrl.text);
+                      newError = validateNew(newCtrl.text);
                     }),
                   ),
                   const SizedBox(height: 14),
@@ -210,8 +210,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     errorText: newError,
                     onToggle: () => setDialogState(() => obscureNew = !obscureNew),
                     onChanged: (val) => setDialogState(() {
-                      newError = _validateNew(val);
-                      if (confirmCtrl.text.isNotEmpty) confirmError = _validateConfirm(confirmCtrl.text);
+                      newError = validateNew(val);
+                      if (confirmCtrl.text.isNotEmpty) confirmError = validateConfirm(confirmCtrl.text);
                     }),
                   ),
                   if (newCtrl.text.isNotEmpty) ...[
@@ -225,7 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     obscure: obscureConfirm,
                     errorText: confirmError,
                     onToggle: () => setDialogState(() => obscureConfirm = !obscureConfirm),
-                    onChanged: (val) => setDialogState(() => confirmError = _validateConfirm(val)),
+                    onChanged: (val) => setDialogState(() => confirmError = validateConfirm(val)),
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -243,8 +243,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             : () async {
                                 setDialogState(() {
                                   currentError = currentCtrl.text.isEmpty ? 'Current password is required.' : null;
-                                  newError = _validateNew(newCtrl.text);
-                                  confirmError = _validateConfirm(confirmCtrl.text);
+                                  newError = validateNew(newCtrl.text);
+                                  confirmError = validateConfirm(confirmCtrl.text);
                                 });
                                 if (currentError != null || newError != null || confirmError != null) return;
 

@@ -51,7 +51,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
     try {
       final provider = context.read<CategoryProvider>();
       final result = await provider.get(filter: {'retrieveAll': true, 'appliesTo': 'Campaign'});
-      if (mounted) setState(() => _categories = result.items ?? []);
+      if (mounted) setState(() => _categories = result.items);
     } catch (_) {}
   }
 
@@ -82,9 +82,9 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
       if (mounted) {
         setState(() {
           if (reset) {
-            _campaigns = result.items ?? [];
+            _campaigns = result.items;
           } else {
-            _campaigns.addAll(result.items ?? []);
+            _campaigns.addAll(result.items);
           }
           _totalCount = result.totalCount ?? 0;
         });
@@ -461,17 +461,12 @@ class _CampaignCard extends StatelessWidget {
 class _ActionButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
-  final bool isDestructive;
 
-  const _ActionButton({
-    required this.label,
-    required this.onTap,
-    this.isDestructive = false,
-  });
+  const _ActionButton({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final color = isDestructive ? const Color(0xFFEF4444) : const Color(0xFFD1493F);
+    const color = Color(0xFFD1493F);
     return SizedBox(
       width: 100,
       child: OutlinedButton(

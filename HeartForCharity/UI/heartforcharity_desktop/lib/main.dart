@@ -10,8 +10,13 @@ import 'package:heartforcharity_desktop/providers/volunteer_application_provider
 import 'package:heartforcharity_desktop/providers/review_provider.dart';
 import 'package:heartforcharity_desktop/providers/campaign_media_provider.dart';
 import 'package:heartforcharity_desktop/providers/upload_provider.dart';
+import 'package:heartforcharity_desktop/providers/country_provider.dart';
 import 'package:heartforcharity_desktop/providers/dashboard_provider.dart';
+import 'package:heartforcharity_desktop/providers/organisation_type_provider.dart';
 import 'package:heartforcharity_desktop/providers/report_provider.dart';
+import 'package:heartforcharity_desktop/providers/skill_provider.dart';
+import 'package:heartforcharity_desktop/providers/user_admin_provider.dart';
+import 'package:heartforcharity_desktop/screens/admin_shell.dart';
 import 'package:heartforcharity_desktop/screens/login_screen.dart';
 import 'package:heartforcharity_desktop/screens/main_shell.dart';
 import 'package:provider/provider.dart';
@@ -39,6 +44,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UploadProvider()),
         Provider(create: (_) => DashboardProvider()),
         Provider(create: (_) => ReportProvider()),
+        ChangeNotifierProvider(create: (_) => SkillProvider()),
+        ChangeNotifierProvider(create: (_) => OrganisationTypeProvider()),
+        ChangeNotifierProvider(create: (_) => CountryProvider()),
+        ChangeNotifierProvider(create: (_) => UserAdminProvider()),
       ],
       child: MaterialApp(
         title: 'HeartForCharity',
@@ -114,8 +123,9 @@ class _AppStartupState extends State<AppStartup> {
       if (!mounted) return;
 
       if (refreshed) {
+        final shell = type == 'Admin' ? const AdminShell() : const MainShell();
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MainShell()),
+          MaterialPageRoute(builder: (_) => shell),
         );
       } else {
         Navigator.of(context).pushReplacement(
