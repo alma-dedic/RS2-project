@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:heartforcharity_desktop/model/responses/category.dart';
+import 'package:heartforcharity_desktop/model/responses/city.dart';
 import 'package:heartforcharity_desktop/model/responses/country.dart';
 import 'package:heartforcharity_desktop/model/responses/organisation_type.dart';
 import 'package:heartforcharity_desktop/model/responses/skill.dart';
 import 'package:heartforcharity_desktop/providers/category_provider.dart';
+import 'package:heartforcharity_desktop/providers/city_provider.dart';
 import 'package:heartforcharity_desktop/providers/country_provider.dart';
 import 'package:heartforcharity_desktop/providers/organisation_type_provider.dart';
 import 'package:heartforcharity_desktop/providers/skill_provider.dart';
@@ -23,7 +25,7 @@ class _ReferenceDataScreenState extends State<ReferenceDataScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -34,24 +36,25 @@ class _ReferenceDataScreenState extends State<ReferenceDataScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: colorScheme.surfaceContainerHighest,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(28, 28, 28, 0),
-            child: const Text('Reference Data',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+            child: Text('Reference Data',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
           ),
           const SizedBox(height: 16),
           Container(
-            color: Colors.white,
+            color: colorScheme.surface,
             child: TabBar(
               controller: _tabController,
-              labelColor: const Color(0xFFD1493F),
-              unselectedLabelColor: const Color(0xFF6B7280),
-              indicatorColor: const Color(0xFFD1493F),
+              labelColor: colorScheme.primary,
+              unselectedLabelColor: colorScheme.onSurfaceVariant,
+              indicatorColor: colorScheme.primary,
               labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
               unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400, fontSize: 13),
               tabs: const [
@@ -59,6 +62,7 @@ class _ReferenceDataScreenState extends State<ReferenceDataScreen>
                 Tab(text: 'Skills'),
                 Tab(text: 'Organisation Types'),
                 Tab(text: 'Countries'),
+                Tab(text: 'Cities'),
               ],
             ),
           ),
@@ -70,6 +74,7 @@ class _ReferenceDataScreenState extends State<ReferenceDataScreen>
                 _SkillsTab(),
                 _OrganisationTypesTab(),
                 _CountriesTab(),
+                _CitiesTab(),
               ],
             ),
           ),
@@ -81,16 +86,16 @@ class _ReferenceDataScreenState extends State<ReferenceDataScreen>
 
 // ─── Generic helpers ────────────────────────────────────────────────────────
 
-Widget _buildLabel(String text) => Text(
+Widget _buildLabel(String text, ColorScheme colorScheme) => Text(
       text,
-      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
     );
 
-Widget _buildField(TextEditingController ctrl, String label, {int maxLines = 1, String? error}) =>
+Widget _buildField(TextEditingController ctrl, String label, ColorScheme colorScheme, {int maxLines = 1, String? error}) =>
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel(label),
+        _buildLabel(label, colorScheme),
         const SizedBox(height: 6),
         TextField(
           controller: ctrl,
@@ -103,7 +108,7 @@ Widget _buildField(TextEditingController ctrl, String label, {int maxLines = 1, 
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFD1493F), width: 1.5),
+              borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
             ),
           ),
         ),
@@ -125,10 +130,10 @@ Future<bool?> _confirm(BuildContext context, String message) => showDialog<bool>
       ),
     );
 
-Widget _buildCard({required Widget child}) => Container(
+Widget _buildCard({required Widget child, required ColorScheme colorScheme}) => Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))
@@ -165,6 +170,7 @@ class _CategoriesTabState extends State<_CategoriesTab> {
   }
 
   Future<void> _showDialog([Category? item]) async {
+    final colorScheme = Theme.of(context).colorScheme;
     final nameCtrl = TextEditingController(text: item?.name ?? '');
     final descCtrl = TextEditingController(text: item?.description ?? '');
     String appliesTo = item?.appliesTo ?? 'Both';
@@ -174,18 +180,17 @@ class _CategoriesTabState extends State<_CategoriesTab> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) => AlertDialog(
-          backgroundColor: Colors.white,
           title: Text(item == null ? 'Add Category' : 'Edit Category'),
           content: SizedBox(
             width: 400,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildField(nameCtrl, 'Name', error: nameError),
+                _buildField(nameCtrl, 'Name', colorScheme, error: nameError),
                 const SizedBox(height: 12),
-                _buildField(descCtrl, 'Description', maxLines: 2),
+                _buildField(descCtrl, 'Description', colorScheme, maxLines: 2),
                 const SizedBox(height: 12),
-                _buildLabel('Applies To'),
+                _buildLabel('Applies To', colorScheme),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   initialValue: appliesTo,
@@ -205,7 +210,7 @@ class _CategoriesTabState extends State<_CategoriesTab> {
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD1493F)),
+              style: ElevatedButton.styleFrom(backgroundColor: colorScheme.primary),
               onPressed: () async {
                 if (nameCtrl.text.trim().isEmpty) {
                   setS(() => nameError = 'Name is required');
@@ -248,6 +253,7 @@ class _CategoriesTabState extends State<_CategoriesTab> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return _RefDataList(
       loading: _loading,
       onAdd: () => _showDialog(),
@@ -257,21 +263,24 @@ class _CategoriesTabState extends State<_CategoriesTab> {
         itemBuilder: (_, i) {
           final item = _items[i];
           return _buildCard(
+            colorScheme: colorScheme,
             child: ListTile(
               title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              subtitle: item.description?.isNotEmpty == true ? Text(item.description!, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))) : null,
+              subtitle: item.description?.isNotEmpty == true
+                  ? Text(item.description!, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant))
+                  : null,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD1493F).withValues(alpha: 0.1),
+                      color: colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(item.appliesTo ?? 'Both', style: const TextStyle(fontSize: 11, color: Color(0xFFD1493F), fontWeight: FontWeight.w500)),
+                    child: Text(item.appliesTo ?? 'Both', style: TextStyle(fontSize: 11, color: colorScheme.primary, fontWeight: FontWeight.w500)),
                   ),
-                  IconButton(icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF6B7280)), onPressed: () => _showDialog(item)),
+                  IconButton(icon: Icon(Icons.edit_outlined, size: 18, color: colorScheme.onSurfaceVariant), onPressed: () => _showDialog(item)),
                   IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red), onPressed: () => _delete(item)),
                 ],
               ),
@@ -311,6 +320,7 @@ class _SkillsTabState extends State<_SkillsTab> {
   }
 
   Future<void> _showDialog([Skill? item]) async {
+    final colorScheme = Theme.of(context).colorScheme;
     final nameCtrl = TextEditingController(text: item?.name ?? '');
     final descCtrl = TextEditingController(text: item?.description ?? '');
     String? nameError;
@@ -325,16 +335,16 @@ class _SkillsTabState extends State<_SkillsTab> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildField(nameCtrl, 'Name', error: nameError),
+                _buildField(nameCtrl, 'Name', colorScheme, error: nameError),
                 const SizedBox(height: 12),
-                _buildField(descCtrl, 'Description', maxLines: 2),
+                _buildField(descCtrl, 'Description', colorScheme, maxLines: 2),
               ],
             ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD1493F)),
+              style: ElevatedButton.styleFrom(backgroundColor: colorScheme.primary),
               onPressed: () async {
                 if (nameCtrl.text.trim().isEmpty) {
                   setS(() => nameError = 'Name is required');
@@ -375,6 +385,7 @@ class _SkillsTabState extends State<_SkillsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return _RefDataList(
       loading: _loading,
       onAdd: () => _showDialog(),
@@ -384,13 +395,16 @@ class _SkillsTabState extends State<_SkillsTab> {
         itemBuilder: (_, i) {
           final item = _items[i];
           return _buildCard(
+            colorScheme: colorScheme,
             child: ListTile(
               title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              subtitle: item.description?.isNotEmpty == true ? Text(item.description!, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))) : null,
+              subtitle: item.description?.isNotEmpty == true
+                  ? Text(item.description!, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant))
+                  : null,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF6B7280)), onPressed: () => _showDialog(item)),
+                  IconButton(icon: Icon(Icons.edit_outlined, size: 18, color: colorScheme.onSurfaceVariant), onPressed: () => _showDialog(item)),
                   IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red), onPressed: () => _delete(item)),
                 ],
               ),
@@ -430,6 +444,7 @@ class _OrganisationTypesTabState extends State<_OrganisationTypesTab> {
   }
 
   Future<void> _showDialog([OrganisationType? item]) async {
+    final colorScheme = Theme.of(context).colorScheme;
     final nameCtrl = TextEditingController(text: item?.name ?? '');
     final descCtrl = TextEditingController(text: item?.description ?? '');
     String? nameError;
@@ -444,16 +459,16 @@ class _OrganisationTypesTabState extends State<_OrganisationTypesTab> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildField(nameCtrl, 'Name', error: nameError),
+                _buildField(nameCtrl, 'Name', colorScheme, error: nameError),
                 const SizedBox(height: 12),
-                _buildField(descCtrl, 'Description', maxLines: 2),
+                _buildField(descCtrl, 'Description', colorScheme, maxLines: 2),
               ],
             ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD1493F)),
+              style: ElevatedButton.styleFrom(backgroundColor: colorScheme.primary),
               onPressed: () async {
                 if (nameCtrl.text.trim().isEmpty) {
                   setS(() => nameError = 'Name is required');
@@ -494,6 +509,7 @@ class _OrganisationTypesTabState extends State<_OrganisationTypesTab> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return _RefDataList(
       loading: _loading,
       onAdd: () => _showDialog(),
@@ -503,13 +519,16 @@ class _OrganisationTypesTabState extends State<_OrganisationTypesTab> {
         itemBuilder: (_, i) {
           final item = _items[i];
           return _buildCard(
+            colorScheme: colorScheme,
             child: ListTile(
               title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              subtitle: item.description?.isNotEmpty == true ? Text(item.description!, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))) : null,
+              subtitle: item.description?.isNotEmpty == true
+                  ? Text(item.description!, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant))
+                  : null,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF6B7280)), onPressed: () => _showDialog(item)),
+                  IconButton(icon: Icon(Icons.edit_outlined, size: 18, color: colorScheme.onSurfaceVariant), onPressed: () => _showDialog(item)),
                   IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red), onPressed: () => _delete(item)),
                 ],
               ),
@@ -549,6 +568,7 @@ class _CountriesTabState extends State<_CountriesTab> {
   }
 
   Future<void> _showDialog([Country? item]) async {
+    final colorScheme = Theme.of(context).colorScheme;
     final nameCtrl = TextEditingController(text: item?.name ?? '');
     final isoCtrl = TextEditingController(text: item?.isoCode ?? '');
     String? nameError;
@@ -563,16 +583,16 @@ class _CountriesTabState extends State<_CountriesTab> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildField(nameCtrl, 'Name', error: nameError),
+                _buildField(nameCtrl, 'Name', colorScheme, error: nameError),
                 const SizedBox(height: 12),
-                _buildField(isoCtrl, 'ISO Code (e.g. BA)'),
+                _buildField(isoCtrl, 'ISO Code (e.g. BA)', colorScheme),
               ],
             ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD1493F)),
+              style: ElevatedButton.styleFrom(backgroundColor: colorScheme.primary),
               onPressed: () async {
                 if (nameCtrl.text.trim().isEmpty) {
                   setS(() => nameError = 'Name is required');
@@ -613,6 +633,7 @@ class _CountriesTabState extends State<_CountriesTab> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return _RefDataList(
       loading: _loading,
       onAdd: () => _showDialog(),
@@ -622,6 +643,7 @@ class _CountriesTabState extends State<_CountriesTab> {
         itemBuilder: (_, i) {
           final item = _items[i];
           return _buildCard(
+            colorScheme: colorScheme,
             child: ListTile(
               title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               trailing: Row(
@@ -636,7 +658,158 @@ class _CountriesTabState extends State<_CountriesTab> {
                       ),
                       child: Text(item.isoCode!, style: const TextStyle(fontSize: 11, color: Color(0xFF3B82F6), fontWeight: FontWeight.w600)),
                     ),
-                  IconButton(icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF6B7280)), onPressed: () => _showDialog(item)),
+                  IconButton(icon: Icon(Icons.edit_outlined, size: 18, color: colorScheme.onSurfaceVariant), onPressed: () => _showDialog(item)),
+                  IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red), onPressed: () => _delete(item)),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ─── Cities ──────────────────────────────────────────────────────────────────
+
+class _CitiesTab extends StatefulWidget {
+  @override
+  State<_CitiesTab> createState() => _CitiesTabState();
+}
+
+class _CitiesTabState extends State<_CitiesTab> {
+  List<City> _items = [];
+  List<Country> _countries = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    final cityProvider = context.read<CityProvider>();
+    final countryProvider = context.read<CountryProvider>();
+    try {
+      final citiesResult = await cityProvider.get(filter: {'pageSize': 500});
+      final countriesResult = await countryProvider.get(filter: {'pageSize': 300});
+      if (mounted) {
+        setState(() {
+          _items = citiesResult.items;
+          _countries = countriesResult.items;
+        });
+      }
+    } catch (_) {} finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _showDialog([City? item]) async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final nameCtrl = TextEditingController(text: item?.name ?? '');
+    int? selectedCountryId = item?.countryId;
+    String? nameError;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          title: Text(item == null ? 'Add City' : 'Edit City'),
+          content: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildField(nameCtrl, 'Name', colorScheme, error: nameError),
+                const SizedBox(height: 12),
+                _buildLabel('Country', colorScheme),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<int>(
+                  initialValue: selectedCountryId,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: 'Select country',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  items: _countries
+                      .map((c) => DropdownMenuItem(value: c.countryId, child: Text(c.name)))
+                      .toList(),
+                  onChanged: (v) => setS(() => selectedCountryId = v),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: colorScheme.primary),
+              onPressed: () async {
+                if (nameCtrl.text.trim().isEmpty) {
+                  setS(() => nameError = 'Name is required');
+                  return;
+                }
+                if (selectedCountryId == null) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Please select a country')));
+                  return;
+                }
+                final body = {'name': nameCtrl.text.trim(), 'countryId': selectedCountryId};
+                final cityProvider = context.read<CityProvider>();
+                try {
+                  if (item == null) {
+                    await cityProvider.insert(body);
+                  } else {
+                    await cityProvider.update(item.cityId, body);
+                  }
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  _load();
+                } catch (e) {
+                  if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString())));
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _delete(City item) async {
+    final ok = await _confirm(context, 'Delete city "${item.name}"?');
+    if (ok != true || !mounted) return;
+    try {
+      await context.read<CityProvider>().delete(item.cityId);
+      _load();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return _RefDataList(
+      loading: _loading,
+      onAdd: () => _showDialog(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(24),
+        itemCount: _items.length,
+        itemBuilder: (_, i) {
+          final item = _items[i];
+          return _buildCard(
+            colorScheme: colorScheme,
+            child: ListTile(
+              title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              subtitle: item.countryName.isNotEmpty
+                  ? Text(item.countryName, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant))
+                  : null,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(icon: Icon(Icons.edit_outlined, size: 18, color: colorScheme.onSurfaceVariant), onPressed: () => _showDialog(item)),
                   IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red), onPressed: () => _delete(item)),
                 ],
               ),
@@ -659,17 +832,18 @@ class _RefDataList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Stack(
       children: [
         loading
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFFD1493F)))
+            ? const Center(child: CircularProgressIndicator())
             : child,
         Positioned(
           right: 24,
           bottom: 24,
           child: FloatingActionButton(
             onPressed: onAdd,
-            backgroundColor: const Color(0xFFD1493F),
+            backgroundColor: colorScheme.primary,
             foregroundColor: Colors.white,
             child: const Icon(Icons.add),
           ),

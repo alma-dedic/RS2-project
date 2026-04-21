@@ -49,8 +49,8 @@ class _ReportDialogState extends State<ReportDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Dialog(
-      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
@@ -62,20 +62,20 @@ class _ReportDialogState extends State<ReportDialog> {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text('Generate Report',
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, size: 20, color: Color(0xFF6B7280)),
+                    icon: Icon(Icons.close, size: 20, color: colorScheme.onSurfaceVariant),
                     splashRadius: 18,
                   ),
                 ],
               ),
               const SizedBox(height: 20),
-              const Text('Report type',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+              Text('Report type',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -93,9 +93,9 @@ class _ReportDialogState extends State<ReportDialog> {
                 ],
               ),
               const SizedBox(height: 20),
-              const Divider(color: Color(0xFFE5E7EB)),
+              Divider(color: colorScheme.outline),
               const SizedBox(height: 16),
-              _buildFilters(),
+              _buildFilters(colorScheme),
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -103,8 +103,8 @@ class _ReportDialogState extends State<ReportDialog> {
                   OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF374151),
-                      side: const BorderSide(color: Color(0xFFD1D5DB)),
+                      foregroundColor: colorScheme.onSurface,
+                      side: BorderSide(color: colorScheme.outlineVariant),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     ),
@@ -118,7 +118,7 @@ class _ReportDialogState extends State<ReportDialog> {
                         : const Icon(Icons.download_outlined, size: 16),
                     label: const Text('Export PDF'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD1493F),
+                      backgroundColor: colorScheme.primary,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -135,24 +135,24 @@ class _ReportDialogState extends State<ReportDialog> {
     );
   }
 
-  Widget _buildFilters() {
+  Widget _buildFilters(ColorScheme colorScheme) {
     switch (_selected) {
       case _ReportType.donations:
-        return _buildDonationsFilters();
+        return _buildDonationsFilters(colorScheme);
       case _ReportType.campaigns:
-        return _buildCampaignsFilters();
+        return _buildCampaignsFilters(colorScheme);
       case _ReportType.volunteers:
-        return _buildVolunteersFilters();
+        return _buildVolunteersFilters(colorScheme);
     }
   }
 
-  Widget _buildDonationsFilters() {
+  Widget _buildDonationsFilters(ColorScheme colorScheme) {
     final fmt = DateFormat('dd MMM yyyy');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Date range (optional)',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+        Text('Date range (optional)',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -197,12 +197,12 @@ class _ReportDialogState extends State<ReportDialog> {
     );
   }
 
-  Widget _buildCampaignsFilters() {
+  Widget _buildCampaignsFilters(ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Status filter (optional)',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+        Text('Status filter (optional)',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -221,10 +221,10 @@ class _ReportDialogState extends State<ReportDialog> {
     );
   }
 
-  Widget _buildVolunteersFilters() {
-    return const Text(
+  Widget _buildVolunteersFilters(ColorScheme colorScheme) {
+    return Text(
       'This report includes all approved volunteers across all your volunteer jobs.',
-      style: TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.5),
+      style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, height: 1.5),
     );
   }
 }
@@ -239,6 +239,7 @@ class _TypeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -246,22 +247,22 @@ class _TypeChip extends StatelessWidget {
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFD1493F).withValues(alpha: 0.08) : const Color(0xFFF9FAFB),
+            color: selected ? colorScheme.primary.withValues(alpha: 0.08) : colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: selected ? const Color(0xFFD1493F) : const Color(0xFFE5E7EB),
+              color: selected ? colorScheme.primary : colorScheme.outline,
               width: selected ? 1.5 : 1,
             ),
           ),
           child: Column(
             children: [
-              Icon(icon, size: 20, color: selected ? const Color(0xFFD1493F) : const Color(0xFF9CA3AF)),
+              Icon(icon, size: 20, color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant),
               const SizedBox(height: 4),
               Text(label,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                    color: selected ? const Color(0xFFD1493F) : const Color(0xFF6B7280),
+                    color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant,
                   )),
             ],
           ),
@@ -280,22 +281,23 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFD1493F) : const Color(0xFFF9FAFB),
+          color: selected ? colorScheme.primary : colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? const Color(0xFFD1493F) : const Color(0xFFE5E7EB),
+            color: selected ? colorScheme.primary : colorScheme.outline,
           ),
         ),
         child: Text(label,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: selected ? Colors.white : const Color(0xFF6B7280),
+              color: selected ? Colors.white : colorScheme.onSurfaceVariant,
             )),
       ),
     );
@@ -319,32 +321,33 @@ class _DatePickerField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onPick,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
+          color: colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: colorScheme.outline),
         ),
         child: Row(
           children: [
-            const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF9CA3AF)),
+            Icon(Icons.calendar_today_outlined, size: 16, color: colorScheme.onSurfaceVariant),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 formatted ?? label,
                 style: TextStyle(
                   fontSize: 13,
-                  color: formatted != null ? const Color(0xFF1A1A2E) : const Color(0xFF9CA3AF),
+                  color: formatted != null ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
             if (value != null)
               GestureDetector(
                 onTap: onClear,
-                child: const Icon(Icons.close, size: 16, color: Color(0xFF9CA3AF)),
+                child: Icon(Icons.close, size: 16, color: colorScheme.onSurfaceVariant),
               ),
           ],
         ),

@@ -38,10 +38,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: colorScheme.surfaceContainerHighest,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFD1493F)))
+          ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? Center(child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -56,6 +57,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildContent() {
+    final colorScheme = Theme.of(context).colorScheme;
     final d = _data!;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(28),
@@ -64,8 +66,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Row(
             children: [
-              const Text('Dashboard',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+              Text('Dashboard',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
               const Spacer(),
               ElevatedButton.icon(
                 onPressed: () => showDialog(
@@ -75,7 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 icon: const Icon(Icons.download_outlined, size: 18),
                 label: const Text('Get Report'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD1493F),
+                  backgroundColor: colorScheme.primary,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -108,6 +110,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildStatCards(DashboardResponse d) {
+    final colorScheme = Theme.of(context).colorScheme;
     final moneyFmt = NumberFormat('#,##0.00', 'en_US');
     return Row(
       children: [
@@ -115,14 +118,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           label: 'Active Campaigns',
           value: '${d.activeCampaigns}',
           icon: Icons.volunteer_activism,
-          color: const Color(0xFFD1493F),
+          color: colorScheme.primary,
         ),
         const SizedBox(width: 12),
         _StatCard(
           label: 'Finished Campaigns',
           value: '${d.finishedCampaigns}',
           icon: Icons.check_circle_outline,
-          color: const Color(0xFF10B981),
+          color: colorScheme.secondary,
         ),
         const SizedBox(width: 12),
         _StatCard(
@@ -143,6 +146,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildDonationsChart(DashboardResponse d) {
+    final colorScheme = Theme.of(context).colorScheme;
     final months = d.monthlyDonations;
     final maxY = months.isEmpty ? 100.0 : months.map((m) => m.total).reduce((a, b) => a > b ? a : b) * 1.2;
     final totalDonations = months.fold(0, (sum, m) => sum + m.count);
@@ -159,7 +163,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Donations', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+                    Text('Donations', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
                     const SizedBox(height: 2),
                     Text('Last 6 months', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
                   ],
@@ -169,7 +173,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text('€${moneyFmt.format(totalAmount)}',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFFD1493F))),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: colorScheme.primary)),
                   Text('$totalDonations donations',
                       style: TextStyle(fontSize: 12, color: Colors.grey[500])),
                 ],
@@ -180,7 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           SizedBox(
             height: 180,
             child: months.isEmpty
-                ? const Center(child: Text('No donation data yet.', style: TextStyle(color: Color(0xFF9CA3AF))))
+                ? Center(child: Text('No donation data yet.', style: TextStyle(color: colorScheme.onSurfaceVariant)))
                 : BarChart(
                     BarChartData(
                       maxY: maxY,
@@ -190,7 +194,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           barRods: [
                             BarChartRodData(
                               toY: months[i].total,
-                              color: const Color(0xFFD1493F),
+                              color: colorScheme.primary,
                               width: 22,
                               borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                             ),
@@ -212,7 +216,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 padding: const EdgeInsets.only(top: 6),
                                 child: Text(
                                   DateFormat('MMM').format(DateTime(m.year, m.month)),
-                                  style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                                  style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
                                 ),
                               );
                             },
@@ -249,17 +253,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildReviews(DashboardResponse d) {
+    final colorScheme = Theme.of(context).colorScheme;
     return _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Volunteer Reviews',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+          Text('Volunteer Reviews',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
           const SizedBox(height: 16),
           if (d.recentReviews.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: Text('No reviews yet.', style: TextStyle(color: Color(0xFF9CA3AF)))),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: Text('No reviews yet.', style: TextStyle(color: colorScheme.onSurfaceVariant))),
             )
           else
             ...d.recentReviews.map((r) => _ReviewTile(review: r)),
@@ -269,12 +274,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildCampaignProgress(DashboardResponse d) {
+    final colorScheme = Theme.of(context).colorScheme;
     return _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Campaign Funding Progress',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+          Text('Campaign Funding Progress',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
           const SizedBox(height: 16),
           ...d.campaignProgress.map((c) => _CampaignProgressTile(item: c)),
         ],
@@ -293,11 +299,12 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 2))],
         ),
@@ -318,9 +325,9 @@ class _StatCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(value,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1A1A2E))),
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
                   Text(label,
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                      style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
                 ],
@@ -339,6 +346,7 @@ class _ReviewTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -348,13 +356,13 @@ class _ReviewTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 18,
-                backgroundColor: const Color(0xFFD1493F).withValues(alpha: 0.12),
+                backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
                 backgroundImage: review.reviewerAvatarUrl != null && review.reviewerAvatarUrl!.isNotEmpty
                     ? NetworkImage(review.reviewerAvatarUrl!)
                     : null,
                 child: review.reviewerAvatarUrl == null || review.reviewerAvatarUrl!.isEmpty
                     ? Text(review.reviewerName.isNotEmpty ? review.reviewerName[0].toUpperCase() : '?',
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFFD1493F)))
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: colorScheme.primary))
                     : null,
               ),
               const SizedBox(width: 10),
@@ -363,9 +371,9 @@ class _ReviewTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(review.reviewerName,
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
                     Text(DateFormat('dd MMM yyyy').format(review.createdAt),
-                        style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+                        style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -375,7 +383,7 @@ class _ReviewTile extends StatelessWidget {
           if (review.comment != null && review.comment!.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(review.comment!,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), height: 1.5),
+                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant, height: 1.5),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis),
           ],
@@ -410,6 +418,7 @@ class _CampaignProgressTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final moneyFmt = NumberFormat('#,##0.00', 'en_US');
     final pct = (item.progress * 100).toStringAsFixed(0);
 
@@ -422,12 +431,12 @@ class _CampaignProgressTile extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(item.title,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E)),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis),
               ),
               Text('$pct%',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFD1493F))),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: colorScheme.primary)),
             ],
           ),
           const SizedBox(height: 6),
@@ -436,13 +445,13 @@ class _CampaignProgressTile extends StatelessWidget {
             child: LinearProgressIndicator(
               value: item.progress,
               backgroundColor: const Color(0xFFF3F4F6),
-              color: const Color(0xFFD1493F),
+              color: colorScheme.primary,
               minHeight: 7,
             ),
           ),
           const SizedBox(height: 4),
           Text('€${moneyFmt.format(item.currentAmount)} raised of €${moneyFmt.format(item.targetAmount)}',
-              style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+              style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)),
         ],
       ),
     );
@@ -455,11 +464,12 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 2))],
       ),

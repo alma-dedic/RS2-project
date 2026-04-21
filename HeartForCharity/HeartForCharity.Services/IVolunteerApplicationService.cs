@@ -10,5 +10,6 @@ namespace HeartForCharity.Services
         Task<VolunteerApplicationResponse> ApproveAsync(int id);
         Task<VolunteerApplicationResponse> RejectAsync(int id, ApplicationRejectRequest request);
         Task<PagedResult<VolunteerApplicationResponse>> GetMyAsync(VolunteerApplicationSearchObject search);
+        Task<bool> WithdrawAsync(int id);
     }
 }

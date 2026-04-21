@@ -32,12 +32,17 @@ namespace HeartForCharity.Services.Database
 
         public bool IsCompleted { get; set; } = false;  // volonterski posao završen
 
+        public int? ReviewedByUserId { get; set; }
+        public DateTime? ReviewedAt { get; set; }
+
         public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigacijska svojstva
         public virtual VolunteerJob VolunteerJob { get; set; } = null!;
         public virtual UserProfile UserProfile { get; set; } = null!;
+        [ForeignKey(nameof(ReviewedByUserId))]
+        public virtual User? ReviewedByUser { get; set; }
         public virtual Review? Review { get; set; }
         public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }

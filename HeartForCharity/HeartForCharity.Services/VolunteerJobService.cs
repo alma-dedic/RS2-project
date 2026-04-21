@@ -80,6 +80,10 @@ namespace HeartForCharity.Services
                 query = query.Where(v => v.IsRemote == search.IsRemote);
             if (search.CityId.HasValue)
                 query = query.Where(v => v.Address != null && v.Address.CityId == search.CityId);
+            if (search.StartDateFrom.HasValue)
+                query = query.Where(v => v.StartDate >= search.StartDateFrom.Value);
+            if (search.StartDateTo.HasValue)
+                query = query.Where(v => v.StartDate <= search.StartDateTo.Value);
 
             query = query.OrderByDescending(v => v.CreatedAt);
 

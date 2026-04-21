@@ -6,6 +6,8 @@ class VolunteerJobSearchObject extends BaseSearchObject {
   final int? organisationProfileId;
   final bool? isRemote;
   final int? cityId;
+  final DateTime? startDateFrom;
+  final DateTime? startDateTo;
 
   VolunteerJobSearchObject({
     super.fts,
@@ -18,6 +20,8 @@ class VolunteerJobSearchObject extends BaseSearchObject {
     this.organisationProfileId,
     this.isRemote,
     this.cityId,
+    this.startDateFrom,
+    this.startDateTo,
   });
 
   @override
@@ -29,5 +33,7 @@ class VolunteerJobSearchObject extends BaseSearchObject {
           'organisationProfileId': organisationProfileId,
         if (isRemote != null) 'isRemote': isRemote,
         if (cityId != null) 'cityId': cityId,
+        if (startDateFrom != null) 'startDateFrom': startDateFrom!.toIso8601String(),
+        if (startDateTo != null) 'startDateTo': startDateTo!.toIso8601String(),
       };
 }

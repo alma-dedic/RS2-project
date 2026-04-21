@@ -94,7 +94,6 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => Dialog(
-        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
@@ -106,18 +105,20 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
               children: [
                 Row(
                   children: [
-                    const Expanded(
-                      child: Text('Reject application', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+                    Expanded(
+                      child: Text('Reject application',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Theme.of(ctx).colorScheme.onSurface)),
                     ),
                     IconButton(
                       onPressed: () => Navigator.of(ctx).pop(false),
-                      icon: const Icon(Icons.close, size: 20, color: Color(0xFF6B7280)),
+                      icon: Icon(Icons.close, size: 20, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
                       splashRadius: 18,
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Optionally provide a reason:', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+                Text('Optionally provide a reason:',
+                    style: TextStyle(fontSize: 13, color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
                 const SizedBox(height: 12),
                 TextField(
                   controller: reasonController,
@@ -134,8 +135,8 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
                     OutlinedButton(
                       onPressed: () => Navigator.of(ctx).pop(false),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF374151),
-                        side: const BorderSide(color: Color(0xFFD1D5DB)),
+                        foregroundColor: Theme.of(ctx).colorScheme.onSurface,
+                        side: BorderSide(color: Theme.of(ctx).colorScheme.outlineVariant),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       ),
@@ -145,7 +146,7 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
                     ElevatedButton(
                       onPressed: () => Navigator.of(ctx).pop(true),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEF4444),
+                        backgroundColor: Theme.of(ctx).colorScheme.error,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -174,8 +175,9 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: colorScheme.surfaceContainerHighest,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(32, 20, 32, 20),
         child: Column(
@@ -184,7 +186,7 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
             Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Color(0xFF1A1A2E)),
+                  icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
                   onPressed: () => Navigator.of(context).pop(),
                   splashRadius: 20,
                 ),
@@ -195,12 +197,12 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
             const SizedBox(height: 16),
             Text(
               widget.job.title,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: colorScheme.onSurface),
             ),
             const SizedBox(height: 4),
             Text(
               'Positions filled ${widget.job.positionsFilled}/${widget.job.positionsAvailable}',
-              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280), fontStyle: FontStyle.italic),
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, fontStyle: FontStyle.italic),
             ),
             const SizedBox(height: 16),
             Row(
@@ -217,14 +219,14 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
                       style: const TextStyle(fontSize: 14),
                       decoration: InputDecoration(
                         hintText: 'Search applicants...',
-                        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                        prefixIcon: const Icon(Icons.search, size: 20, color: Color(0xFF9CA3AF)),
+                        hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                        prefixIcon: Icon(Icons.search, size: 20, color: colorScheme.onSurfaceVariant),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: colorScheme.surface,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFD1493F), width: 1.5)),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.outline)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.outline)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.primary, width: 1.5)),
                       ),
                     ),
                   ),
@@ -234,14 +236,14 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
                   height: 44,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    border: Border.all(color: colorScheme.outline),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String?>(
                       value: _selectedStatus,
-                      hint: const Text('All statuses', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14)),
+                      hint: Text('All statuses', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14)),
                       items: [
                         const DropdownMenuItem(value: null, child: Text('All statuses')),
                         ..._statuses.map((s) => DropdownMenuItem(value: s, child: Text(s))),
@@ -250,8 +252,8 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
                         setState(() => _selectedStatus = val);
                         _load(reset: true);
                       },
-                      style: const TextStyle(color: Color(0xFF111827), fontSize: 14),
-                      icon: const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF9CA3AF)),
+                      style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                      icon: Icon(Icons.keyboard_arrow_down, size: 20, color: colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ),
@@ -266,13 +268,14 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
   }
 
   Widget _buildContent() {
+    final colorScheme = Theme.of(context).colorScheme;
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFD1493F)));
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_applications.isEmpty) {
-      return const Center(
-        child: Text('No applications yet.', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 15)),
+      return Center(
+        child: Text('No applications yet.', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 15)),
       );
     }
 
@@ -281,7 +284,7 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
       children: [
         Text(
           'Showing ${_applications.length} of $_totalCount applications',
-          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
         ),
         const SizedBox(height: 12),
         Expanded(
@@ -299,12 +302,12 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
           const SizedBox(height: 16),
           Center(
             child: _isLoadingMore
-                ? const CircularProgressIndicator(color: Color(0xFFD1493F))
+                ? const CircularProgressIndicator()
                 : OutlinedButton(
                     onPressed: () { _currentPage++; _load(); },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFD1493F),
-                      side: const BorderSide(color: Color(0xFFD1493F)),
+                      foregroundColor: colorScheme.primary,
+                      side: BorderSide(color: colorScheme.primary),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                     ),
@@ -329,6 +332,7 @@ class _ApplicationCard extends StatelessWidget {
   });
 
   void _showDetail(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isPending = application.status?.toLowerCase() == 'pending';
     final dateStr = application.appliedAt != null
         ? DateFormat('dd MMM yyyy – HH:mm').format(application.appliedAt!)
@@ -337,7 +341,6 @@ class _ApplicationCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
-        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
@@ -354,9 +357,9 @@ class _ApplicationCard extends StatelessWidget {
                       height: 44,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFFD1493F).withValues(alpha: 0.1),
+                        color: colorScheme.primary.withValues(alpha: 0.1),
                       ),
-                      child: const Icon(Icons.person_outline, color: Color(0xFFD1493F), size: 24),
+                      child: Icon(Icons.person_outline, color: colorScheme.primary, size: 24),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -365,10 +368,10 @@ class _ApplicationCard extends StatelessWidget {
                         children: [
                           Text(
                             application.applicantName ?? 'Unknown applicant',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: colorScheme.onSurface),
                           ),
                           if (dateStr.isNotEmpty)
-                            Text(dateStr, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+                            Text(dateStr, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
                         ],
                       ),
                     ),
@@ -376,13 +379,13 @@ class _ApplicationCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     IconButton(
                       onPressed: () => Navigator.of(ctx).pop(),
-                      icon: const Icon(Icons.close, size: 20, color: Color(0xFF6B7280)),
+                      icon: Icon(Icons.close, size: 20, color: colorScheme.onSurfaceVariant),
                       splashRadius: 18,
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
-                const Divider(color: Color(0xFFE5E7EB)),
+                Divider(color: colorScheme.outline),
                 const SizedBox(height: 12),
                 if (application.dateOfBirth != null)
                   _IconDetailRow(icon: Icons.cake_outlined, value: DateFormat('dd MMM yyyy').format(application.dateOfBirth!)),
@@ -394,13 +397,13 @@ class _ApplicationCard extends StatelessWidget {
                   _IconDetailRow(icon: Icons.email_outlined, value: application.email!),
                 if (application.coverLetter != null && application.coverLetter!.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  const Text('Cover letter', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+                  Text('Cover letter', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
                   const SizedBox(height: 6),
-                  Text(application.coverLetter!, style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.5)),
+                  Text(application.coverLetter!, style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, height: 1.5)),
                   const SizedBox(height: 12),
                 ],
                 if (application.resumeUrl != null && application.resumeUrl!.isNotEmpty) ...[
-                  const Text('Resume', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+                  Text('Resume', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
                   const SizedBox(height: 4),
                   GestureDetector(
                     onTap: () async {
@@ -413,7 +416,7 @@ class _ApplicationCard extends StatelessWidget {
                       application.resumeUrl!,
                       style: const TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF3B82F6),
+                        color: Color(0xFF3B82F6), // semantic link blue — intentional
                         decoration: TextDecoration.underline,
                         decorationColor: Color(0xFF3B82F6),
                       ),
@@ -422,13 +425,13 @@ class _ApplicationCard extends StatelessWidget {
                   const SizedBox(height: 12),
                 ],
                 if (application.rejectionReason != null && application.rejectionReason!.isNotEmpty) ...[
-                  const Text('Rejection reason', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFFEF4444))),
+                  Text('Rejection reason', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.error)),
                   const SizedBox(height: 4),
-                  Text(application.rejectionReason!, style: const TextStyle(fontSize: 13, color: Color(0xFFEF4444), fontStyle: FontStyle.italic)),
+                  Text(application.rejectionReason!, style: TextStyle(fontSize: 13, color: colorScheme.error, fontStyle: FontStyle.italic)),
                   const SizedBox(height: 12),
                 ],
                 if (isPending) ...[
-                  const Divider(color: Color(0xFFE5E7EB)),
+                  Divider(color: colorScheme.outline),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -436,8 +439,8 @@ class _ApplicationCard extends StatelessWidget {
                       OutlinedButton(
                         onPressed: () { Navigator.of(ctx).pop(); onReject(); },
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFFEF4444),
-                          side: const BorderSide(color: Color(0xFFEF4444)),
+                          foregroundColor: colorScheme.error,
+                          side: BorderSide(color: colorScheme.error),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         ),
@@ -447,8 +450,8 @@ class _ApplicationCard extends StatelessWidget {
                       ElevatedButton(
                         onPressed: () { Navigator.of(ctx).pop(); onApprove(); },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF059669),
-                          foregroundColor: Colors.white,
+                          backgroundColor: colorScheme.secondary,
+                          foregroundColor: colorScheme.onSecondary,
                           elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -468,6 +471,7 @@ class _ApplicationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isApproved = application.status?.toLowerCase() == 'approved';
     final dateStr = application.appliedAt != null
         ? DateFormat('dd MMM yyyy').format(application.appliedAt!)
@@ -476,7 +480,7 @@ class _ApplicationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -494,9 +498,9 @@ class _ApplicationCard extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFD1493F).withValues(alpha: 0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
             ),
-            child: const Icon(Icons.person_outline, color: Color(0xFFD1493F), size: 24),
+            child: Icon(Icons.person_outline, color: colorScheme.primary, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -507,12 +511,12 @@ class _ApplicationCard extends StatelessWidget {
                   children: [
                     Text(
                       application.applicantName ?? 'Unknown applicant',
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E)),
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
                     ),
                     const SizedBox(width: 10),
                     if (application.status != null) _StatusBadge(status: application.status!),
                     const Spacer(),
-                    Text(dateStr, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+                    Text(dateStr, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
                   ],
                 ),
                 if (application.coverLetter != null && application.coverLetter!.isNotEmpty) ...[
@@ -521,14 +525,14 @@ class _ApplicationCard extends StatelessWidget {
                     application.coverLetter!,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.4),
+                    style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, height: 1.4),
                   ),
                 ],
                 if (application.rejectionReason != null && application.rejectionReason!.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
                     'Rejection reason: ${application.rejectionReason}',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFFEF4444), fontStyle: FontStyle.italic),
+                    style: TextStyle(fontSize: 12, color: colorScheme.error, fontStyle: FontStyle.italic),
                   ),
                 ],
               ],
@@ -541,8 +545,8 @@ class _ApplicationCard extends StatelessWidget {
               child: OutlinedButton(
                 onPressed: () => _showDetail(context),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFD1493F),
-                  side: const BorderSide(color: Color(0xFFD1493F)),
+                  foregroundColor: colorScheme.primary,
+                  side: BorderSide(color: colorScheme.primary),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
@@ -565,15 +569,16 @@ class _IconDetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF9CA3AF)),
+          Icon(icon, size: 18, color: colorScheme.onSurfaceVariant),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 13, color: Color(0xFF1A1A2E), fontWeight: FontWeight.w500)),
+            child: Text(value, style: TextStyle(fontSize: 13, color: colorScheme.onSurface, fontWeight: FontWeight.w500)),
           ),
         ],
       ),

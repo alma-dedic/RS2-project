@@ -56,6 +56,13 @@ class AuthProvider with ChangeNotifier {
     return false;
   }
 
+  // Called by BaseProvider when refresh fails — clears session without an HTTP call
+  static Future<void> clearSession() async {
+    token = null;
+    userType = null;
+    await _storage.deleteAll();
+  }
+
   // Called automatically by BaseProvider when a 401 is received
   static Future<bool> tryRefresh() async {
     if (_isRefreshing) return false;

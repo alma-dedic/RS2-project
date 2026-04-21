@@ -159,12 +159,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
       initialDate: initial,
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: Color(0xFFD1493F)),
-        ),
-        child: child!,
-      ),
+      builder: (context, child) => child!,
     );
     if (picked == null) return;
     setState(() {
@@ -320,7 +315,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
               ),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
-                style: TextButton.styleFrom(foregroundColor: const Color(0xFFD1493F)),
+                style: TextButton.styleFrom(foregroundColor: Theme.of(ctx).colorScheme.primary),
                 child: const Text('Confirm'),
               ),
             ],
@@ -331,11 +326,12 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isActive = widget.campaign?.status == 'Active';
     final canDelete = isActive && (widget.campaign?.donationCount ?? 0) == 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: colorScheme.surfaceContainerHighest,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(32, 20, 32, 20),
         child: Column(
@@ -343,7 +339,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
             Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Color(0xFF1A1A2E)),
+                  icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
                   onPressed: () => Navigator.of(context).pop(),
                   splashRadius: 20,
                 ),
@@ -360,7 +356,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                     width: 600,
                     padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -378,10 +374,10 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                           Center(
                             child: Text(
                               widget.isEdit ? 'Edit campaign' : 'New campaign',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFFD1493F),
+                                color: colorScheme.primary,
                               ),
                             ),
                           ),
@@ -393,7 +389,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                             controller: _titleController,
                             enabled: !widget.isEdit || isActive,
                             maxLength: 200,
-                            decoration: _inputDecoration('Enter campaign title'),
+                            decoration: _inputDecoration('Enter campaign title', colorScheme),
                             validator: (v) => (v == null || v.trim().isEmpty) ? 'Title is required' : null,
                           ),
                           const SizedBox(height: 12),
@@ -405,7 +401,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                             maxLines: 3,
                             maxLength: 4000,
                             enabled: !widget.isEdit || isActive,
-                            decoration: _inputDecoration('Enter campaign description'),
+                            decoration: _inputDecoration('Enter campaign description', colorScheme),
                           ),
                           const SizedBox(height: 12),
 
@@ -421,6 +417,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                                       value: _startDate,
                                       hint: 'Select start date',
                                       onTap: (!widget.isEdit || isActive) ? () => _pickDate(isStart: true) : null,
+                                      colorScheme: colorScheme,
                                     ),
                                   ],
                                 ),
@@ -436,6 +433,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                                       value: _endDate,
                                       hint: 'Select end date',
                                       onTap: (!widget.isEdit || isActive) ? () => _pickDate(isStart: false) : null,
+                                      colorScheme: colorScheme,
                                     ),
                                   ],
                                 ),
@@ -457,7 +455,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                                       enabled: !widget.isEdit || isActive,
                                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
-                                      decoration: _inputDecoration('0.00'),
+                                      decoration: _inputDecoration('0.00', colorScheme),
                                       validator: (v) {
                                         if (v == null || v.trim().isEmpty) return 'Target amount is required';
                                         final amount = double.tryParse(v.trim());
@@ -475,7 +473,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                                   children: [
                                     _buildLabel('Category'),
                                     const SizedBox(height: 6),
-                                    _buildCategoryDropdown(enabled: !widget.isEdit || isActive),
+                                    _buildCategoryDropdown(enabled: !widget.isEdit || isActive, colorScheme: colorScheme),
                                   ],
                                 ),
                               ),
@@ -485,7 +483,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
 
                           _buildLabel('Images'),
                           const SizedBox(height: 8),
-                          _buildImagesSection(canEdit: !widget.isEdit || isActive),
+                          _buildImagesSection(canEdit: !widget.isEdit || isActive, colorScheme: colorScheme),
                           const SizedBox(height: 20),
 
                           // Save / Cancel buttons (only shown if add mode OR active campaign)
@@ -496,8 +494,8 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                                 OutlinedButton(
                                   onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: const Color(0xFF374151),
-                                    side: const BorderSide(color: Color(0xFFD1D5DB)),
+                                    foregroundColor: colorScheme.onSurface,
+                                    side: BorderSide(color: colorScheme.outlineVariant),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                     padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                                   ),
@@ -507,7 +505,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                                 ElevatedButton(
                                   onPressed: _isLoading ? null : _save,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFD1493F),
+                                    backgroundColor: colorScheme.primary,
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -528,7 +526,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                           // Edit-mode actions for Active campaigns
                           if (widget.isEdit && isActive) ...[
                             const SizedBox(height: 20),
-                            const Divider(color: Color(0xFFE5E7EB)),
+                            Divider(color: colorScheme.outline),
                             const SizedBox(height: 16),
                             Row(
                               children: [
@@ -536,8 +534,8 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                                   child: OutlinedButton(
                                     onPressed: _isLoading ? null : _completeCampaign,
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFF059669),
-                                      side: const BorderSide(color: Color(0xFF059669)),
+                                      foregroundColor: colorScheme.secondary,
+                                      side: BorderSide(color: colorScheme.secondary),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                       padding: const EdgeInsets.symmetric(vertical: 14),
                                     ),
@@ -549,8 +547,8 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                                   child: OutlinedButton(
                                     onPressed: _isLoading ? null : _cancelCampaign,
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFFEF4444),
-                                      side: const BorderSide(color: Color(0xFFEF4444)),
+                                      foregroundColor: colorScheme.error,
+                                      side: BorderSide(color: colorScheme.error),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                       padding: const EdgeInsets.symmetric(vertical: 14),
                                     ),
@@ -565,7 +563,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                                 child: TextButton(
                                   onPressed: _isLoading ? null : _deleteCampaign,
                                   style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFF9CA3AF),
+                                    foregroundColor: colorScheme.onSurfaceVariant,
                                   ),
                                   child: const Text(
                                     'Delete campaign',
@@ -585,7 +583,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                             Center(
                               child: Text(
                                 'This campaign is ${widget.campaign!.status?.toLowerCase()} and cannot be edited.',
-                                style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                                style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -610,52 +608,49 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
   }
 
   Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
-    );
+    return Text(text, style: Theme.of(context).textTheme.titleSmall);
   }
 
-  InputDecoration _inputDecoration(String hint) {
+  InputDecoration _inputDecoration(String hint, ColorScheme colorScheme) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 14),
+      hintStyle: TextStyle(color: colorScheme.outlineVariant, fontSize: 14),
       filled: true,
-      fillColor: const Color(0xFFF9FAFB),
+      fillColor: colorScheme.surfaceContainerLow,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        borderSide: BorderSide(color: colorScheme.outline),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        borderSide: BorderSide(color: colorScheme.outline),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFD1493F), width: 1.5),
+        borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFEF4444)),
+        borderSide: BorderSide(color: colorScheme.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+        borderSide: BorderSide(color: colorScheme.error, width: 1.5),
       ),
     );
   }
 
-  Widget _buildDateField({required DateTime? value, required String hint, VoidCallback? onTap}) {
+  Widget _buildDateField({required DateTime? value, required String hint, VoidCallback? onTap, required ColorScheme colorScheme}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 48,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: onTap != null ? const Color(0xFFF9FAFB) : const Color(0xFFF3F4F6),
+          color: onTap != null ? colorScheme.surfaceContainerLow : colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: colorScheme.outline),
         ),
         child: Row(
           children: [
@@ -666,44 +661,44 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                     : hint,
                 style: TextStyle(
                   fontSize: 14,
-                  color: value != null ? const Color(0xFF111827) : const Color(0xFFD1D5DB),
+                  color: value != null ? colorScheme.onSurface : colorScheme.outlineVariant,
                 ),
               ),
             ),
-            Icon(Icons.calendar_today_outlined, size: 18, color: onTap != null ? const Color(0xFF9CA3AF) : const Color(0xFFD1D5DB)),
+            Icon(Icons.calendar_today_outlined, size: 18, color: onTap != null ? colorScheme.onSurfaceVariant : colorScheme.outlineVariant),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCategoryDropdown({bool enabled = true}) {
+  Widget _buildCategoryDropdown({bool enabled = true, required ColorScheme colorScheme}) {
     return Container(
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: enabled ? const Color(0xFFF9FAFB) : const Color(0xFFF3F4F6),
+        color: enabled ? colorScheme.surfaceContainerLow : colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: colorScheme.outline),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int?>(
           value: _categories.any((c) => c.categoryId == _selectedCategoryId) ? _selectedCategoryId : null,
-          hint: const Text('Select category', style: TextStyle(color: Color(0xFFD1D5DB), fontSize: 14)),
+          hint: Text('Select category', style: TextStyle(color: colorScheme.outlineVariant, fontSize: 14)),
           isExpanded: true,
           onChanged: enabled ? (val) => setState(() => _selectedCategoryId = val) : null,
           items: [
             const DropdownMenuItem(value: null, child: Text('No category')),
             ..._categories.map((c) => DropdownMenuItem(value: c.categoryId, child: Text(c.name))),
           ],
-          style: const TextStyle(color: Color(0xFF111827), fontSize: 14),
-          icon: const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF9CA3AF)),
+          style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+          icon: Icon(Icons.keyboard_arrow_down, size: 20, color: colorScheme.onSurfaceVariant),
         ),
       ),
     );
   }
 
-  Widget _buildImagesSection({bool canEdit = true}) {
+  Widget _buildImagesSection({bool canEdit = true, required ColorScheme colorScheme}) {
     final visibleExisting = _existingImages.where((m) => !_removedExistingIds.contains(m.campaignMediaId)).toList();
     final hasImages = visibleExisting.isNotEmpty || _newImages.isNotEmpty;
 
@@ -715,8 +710,8 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
             spacing: 10,
             runSpacing: 10,
             children: [
-              ...visibleExisting.map((m) => _buildExistingImageTile(m, canEdit: canEdit)),
-              ...List.generate(_newImages.length, (i) => _buildNewImageTile(i, canEdit: canEdit)),
+              ...visibleExisting.map((m) => _buildExistingImageTile(m, canEdit: canEdit, colorScheme: colorScheme)),
+              ...List.generate(_newImages.length, (i) => _buildNewImageTile(i, canEdit: canEdit, colorScheme: colorScheme)),
             ],
           ),
           const SizedBox(height: 12),
@@ -727,8 +722,8 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
             icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
             label: const Text('Upload images'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFD1493F),
-              side: const BorderSide(color: Color(0xFFD1493F)),
+              foregroundColor: colorScheme.primary,
+              side: BorderSide(color: colorScheme.primary),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),
@@ -737,7 +732,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
     );
   }
 
-  Widget _buildExistingImageTile(CampaignMedia media, {bool canEdit = true}) {
+  Widget _buildExistingImageTile(CampaignMedia media, {bool canEdit = true, required ColorScheme colorScheme}) {
     final isCover = media.isCover;
 
     return Stack(
@@ -750,7 +745,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isCover ? const Color(0xFFD1493F) : const Color(0xFFE5E7EB),
+                color: isCover ? colorScheme.primary : colorScheme.outline,
                 width: isCover ? 2 : 1,
               ),
             ),
@@ -759,7 +754,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
               child: Image.network(
                 media.url!,
                 fit: BoxFit.cover,
-                errorBuilder: (context, e, s) => const Icon(Icons.broken_image_outlined, color: Color(0xFF9CA3AF)),
+                errorBuilder: (context, e, s) => Icon(Icons.broken_image_outlined, color: colorScheme.onSurfaceVariant),
               ),
             ),
           ),
@@ -771,7 +766,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFFD1493F),
+                color: colorScheme.primary,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: const Text('Cover', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
@@ -787,7 +782,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                 width: 22,
                 height: 22,
                 decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                child: const Icon(Icons.close, size: 14, color: Color(0xFF374151)),
+                child: Icon(Icons.close, size: 14, color: colorScheme.onSurface),
               ),
             ),
           ),
@@ -795,7 +790,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
     );
   }
 
-  Widget _buildNewImageTile(int index, {bool canEdit = true}) {
+  Widget _buildNewImageTile(int index, {bool canEdit = true, required ColorScheme colorScheme}) {
     final image = _newImages[index];
     final isCover = image['isCover'] == true;
 
@@ -809,7 +804,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isCover ? const Color(0xFFD1493F) : const Color(0xFFE5E7EB),
+                color: isCover ? colorScheme.primary : colorScheme.outline,
                 width: isCover ? 2 : 1,
               ),
             ),
@@ -818,7 +813,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
               child: Image.file(
                 File(image['path'] as String),
                 fit: BoxFit.cover,
-                errorBuilder: (context, e, s) => const Icon(Icons.broken_image_outlined, color: Color(0xFF9CA3AF)),
+                errorBuilder: (context, e, s) => Icon(Icons.broken_image_outlined, color: colorScheme.onSurfaceVariant),
               ),
             ),
           ),
@@ -830,7 +825,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFFD1493F),
+                color: colorScheme.primary,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: const Text('Cover', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
@@ -846,7 +841,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                 width: 22,
                 height: 22,
                 decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                child: const Icon(Icons.close, size: 14, color: Color(0xFF374151)),
+                child: Icon(Icons.close, size: 14, color: colorScheme.onSurface),
               ),
             ),
           ),

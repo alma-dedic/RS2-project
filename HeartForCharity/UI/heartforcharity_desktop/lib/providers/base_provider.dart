@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
+import 'package:heartforcharity_desktop/main.dart';
 import 'package:heartforcharity_desktop/model/search_result.dart';
 import 'package:heartforcharity_desktop/providers/auth_provider.dart';
+import 'package:heartforcharity_desktop/screens/login_screen.dart';
 
 abstract class BaseProvider<T> with ChangeNotifier {
   static String baseUrl = const String.fromEnvironment(
@@ -17,7 +19,8 @@ abstract class BaseProvider<T> with ChangeNotifier {
     _endpoint = endpoint;
   }
 
-  // Executes a request and retries once after token refresh on 401
+  // Executes a request and retries once after token refresh on 401.
+  // If refresh also fails, clears the session and redirects to login.
   Future<Response> _execute(Future<Response> Function() request) async {
     var response = await request();
 
@@ -25,6 +28,13 @@ abstract class BaseProvider<T> with ChangeNotifier {
       final refreshed = await AuthProvider.tryRefresh();
       if (refreshed) {
         response = await request();
+      } else {
+        await AuthProvider.clearSession();
+        navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (_) => false,
+        );
+        throw Exception('Session expired. Please log in again.');
       }
     }
 
@@ -42,15 +52,12 @@ abstract class BaseProvider<T> with ChangeNotifier {
     var uri = Uri.parse(url);
     var response = await _execute(() => http.get(uri, headers: createHeaders()));
 
-    if (isValidResponse(response)) {
-      var data = jsonDecode(response.body);
-      var result = SearchResult<T>();
-      result.totalCount = data['totalCount'];
-      result.items = List<T>.from(data['items'].map((e) => fromJson(e)));
-      return result;
-    } else {
-      throw Exception('Unknown error');
-    }
+    isValidResponse(response);
+    var data = jsonDecode(response.body);
+    var result = SearchResult<T>();
+    result.totalCount = data['totalCount'];
+    result.items = List<T>.from(data['items'].map((e) => fromJson(e)));
+    return result;
   }
 
   Future<T> getById(int id) async {
@@ -58,12 +65,9 @@ abstract class BaseProvider<T> with ChangeNotifier {
     var uri = Uri.parse(url);
     var response = await _execute(() => http.get(uri, headers: createHeaders()));
 
-    if (isValidResponse(response)) {
-      var data = jsonDecode(response.body);
-      return fromJson(data);
-    } else {
-      throw Exception('Unknown error');
-    }
+    isValidResponse(response);
+    var data = jsonDecode(response.body);
+    return fromJson(data);
   }
 
   Future<T> insert(dynamic request) async {
@@ -73,12 +77,9 @@ abstract class BaseProvider<T> with ChangeNotifier {
       () => http.post(uri, headers: createHeaders(), body: jsonEncode(request)),
     );
 
-    if (isValidResponse(response)) {
-      var data = jsonDecode(response.body);
-      return fromJson(data);
-    } else {
-      throw Exception('Unknown error');
-    }
+    isValidResponse(response);
+    var data = jsonDecode(response.body);
+    return fromJson(data);
   }
 
   Future<T> update(int id, dynamic request) async {
@@ -88,12 +89,9 @@ abstract class BaseProvider<T> with ChangeNotifier {
       () => http.put(uri, headers: createHeaders(), body: jsonEncode(request)),
     );
 
-    if (isValidResponse(response)) {
-      var data = jsonDecode(response.body);
-      return fromJson(data);
-    } else {
-      throw Exception('Unknown error');
-    }
+    isValidResponse(response);
+    var data = jsonDecode(response.body);
+    return fromJson(data);
   }
 
   Future<bool> delete(int id) async {
@@ -109,13 +107,29 @@ abstract class BaseProvider<T> with ChangeNotifier {
   }
 
   bool isValidResponse(Response response) {
-    if (response.statusCode < 299) {
-      return true;
-    } else if (response.statusCode == 401) {
-      throw Exception('Unauthorized');
-    } else {
-      throw Exception('Something went wrong. Please try again.');
-    }
+    if (response.statusCode < 299) return true;
+    throw Exception(_extractErrorMessage(response));
+  }
+
+  // Extracts the most specific error message from the backend response body.
+  // Backend returns: { "errors": { "key": ["message", ...] } }
+  String _extractErrorMessage(Response response) {
+    try {
+      final body = jsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        final errors = body['errors'];
+        if (errors is Map && errors.isNotEmpty) {
+          final first = errors.values.first;
+          if (first is List && first.isNotEmpty) return first.first.toString();
+          if (first is String) return first;
+        }
+        final message = body['message'];
+        if (message is String && message.isNotEmpty) return message;
+        final title = body['title'];
+        if (title is String && title.isNotEmpty) return title;
+      }
+    } catch (_) {}
+    return 'Request failed (HTTP ${response.statusCode}).';
   }
 
   Map<String, String> createHeaders() {

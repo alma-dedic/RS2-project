@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:heartforcharity_desktop/model/responses/campaign.dart';
 import 'package:heartforcharity_desktop/model/responses/donation.dart';
@@ -17,6 +18,8 @@ class CampaignDonationsScreen extends StatefulWidget {
 
 class _CampaignDonationsScreenState extends State<CampaignDonationsScreen> {
   final int _pageSize = 5;
+  final _searchController = TextEditingController();
+  Timer? _searchDebounce;
 
   List<Donation> _donations = [];
   int _totalCount = 0;
@@ -34,6 +37,13 @@ class _CampaignDonationsScreenState extends State<CampaignDonationsScreen> {
     _loadDonations(reset: true);
   }
 
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadDonations({bool reset = false}) async {
     if (reset) {
       setState(() {
@@ -49,6 +59,7 @@ class _CampaignDonationsScreenState extends State<CampaignDonationsScreen> {
       final provider = context.read<DonationProvider>();
       final filter = DonationSearchObject(
         campaignId: widget.campaign.campaignId,
+        fts: _searchController.text.trim().isEmpty ? null : _searchController.text.trim(),
         page: _currentPage,
         pageSize: _pageSize,
         includeTotalCount: true,
@@ -97,8 +108,9 @@ class _CampaignDonationsScreenState extends State<CampaignDonationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: colorScheme.surfaceContainerHighest,
       body: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
@@ -107,7 +119,7 @@ class _CampaignDonationsScreenState extends State<CampaignDonationsScreen> {
             Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Color(0xFF1A1A2E)),
+                  icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
                   onPressed: () => Navigator.of(context).pop(),
                   splashRadius: 20,
                 ),
@@ -122,26 +134,49 @@ class _CampaignDonationsScreenState extends State<CampaignDonationsScreen> {
                 children: [
                   Text(
                     widget.campaign.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFFD1493F),
+                      color: colorScheme.primary,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     '\$${widget.campaign.currentAmount.toStringAsFixed(2)} out of \$${widget.campaign.targetAmount.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF374151), fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 13, color: colorScheme.onSurface, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   LinearProgressIndicator(
                     value: _progress,
-                    backgroundColor: const Color(0xFFE5E7EB),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFD1493F)),
+                    backgroundColor: colorScheme.outline,
+                    valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
                     minHeight: 6,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   const SizedBox(height: 24),
+                  SizedBox(
+                    height: 44,
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (_) {
+                        _searchDebounce?.cancel();
+                        _searchDebounce = Timer(const Duration(milliseconds: 400), () => _loadDonations(reset: true));
+                      },
+                      style: const TextStyle(fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: 'Search by donor name...',
+                        hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                        prefixIcon: Icon(Icons.search, size: 20, color: colorScheme.onSurfaceVariant),
+                        filled: true,
+                        fillColor: colorScheme.surface,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.outline)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.outline)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.primary, width: 1.5)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   _buildSortRow(),
                   const SizedBox(height: 16),
                   Expanded(child: _buildContent()),
@@ -198,14 +233,15 @@ class _CampaignDonationsScreenState extends State<CampaignDonationsScreen> {
     required bool isActive,
     required ValueChanged<String?> onChanged,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       height: 38,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFFFF1F0) : Colors.white,
+        color: isActive ? colorScheme.primary.withValues(alpha: 0.06) : colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isActive ? const Color(0xFFD1493F) : const Color(0xFFE5E7EB),
+          color: isActive ? colorScheme.primary : colorScheme.outline,
         ),
       ),
       child: DropdownButtonHideUnderline(
@@ -217,14 +253,14 @@ class _CampaignDonationsScreenState extends State<CampaignDonationsScreen> {
           ],
           onChanged: onChanged,
           style: TextStyle(
-            color: isActive ? const Color(0xFFD1493F) : const Color(0xFF374151),
+            color: isActive ? colorScheme.primary : colorScheme.onSurface,
             fontSize: 13,
             fontWeight: FontWeight.w500,
           ),
           icon: Icon(
             Icons.keyboard_arrow_down,
             size: 18,
-            color: isActive ? const Color(0xFFD1493F) : const Color(0xFF9CA3AF),
+            color: isActive ? colorScheme.primary : colorScheme.onSurfaceVariant,
           ),
         ),
       ),
@@ -232,15 +268,16 @@ class _CampaignDonationsScreenState extends State<CampaignDonationsScreen> {
   }
 
   Widget _buildContent() {
+    final colorScheme = Theme.of(context).colorScheme;
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFD1493F)));
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_donations.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No donations yet.',
-          style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
+          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 15),
         ),
       );
     }
@@ -250,7 +287,7 @@ class _CampaignDonationsScreenState extends State<CampaignDonationsScreen> {
       children: [
         Text(
           'Showing ${_donations.length} of $_totalCount donations',
-          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
         ),
         const SizedBox(height: 12),
         Expanded(
@@ -264,12 +301,12 @@ class _CampaignDonationsScreenState extends State<CampaignDonationsScreen> {
           const SizedBox(height: 16),
           Center(
             child: _isLoadingMore
-                ? const CircularProgressIndicator(color: Color(0xFFD1493F))
+                ? const CircularProgressIndicator()
                 : OutlinedButton(
                     onPressed: _loadMore,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFD1493F),
-                      side: const BorderSide(color: Color(0xFFD1493F)),
+                      foregroundColor: colorScheme.primary,
+                      side: BorderSide(color: colorScheme.primary),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                     ),
@@ -289,6 +326,7 @@ class _DonationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final donorName = donation.isAnonymous || donation.donorName == null
         ? 'Anonymous donor'
         : donation.donorName!;
@@ -299,7 +337,7 @@ class _DonationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -316,32 +354,32 @@ class _DonationCard extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFF3F4F6),
+              color: colorScheme.surfaceContainerHighest,
             ),
-            child: const Icon(Icons.person, size: 24, color: Color(0xFF9CA3AF)),
+            child: Icon(Icons.person, size: 24, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
               donorName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A2E),
+                color: colorScheme.onSurface,
               ),
             ),
           ),
           Text(
             dateStr,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(width: 24),
           Text(
             '\$${donation.amount.toStringAsFixed(2)}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF1A1A2E),
+              color: colorScheme.onSurface,
             ),
           ),
         ],

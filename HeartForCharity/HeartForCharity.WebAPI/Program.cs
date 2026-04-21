@@ -3,7 +3,6 @@ using FluentValidation.AspNetCore;
 using HeartForCharity.Model.Validators;
 using HeartForCharity.Services;
 using HeartForCharity.Services.Database;
-using EasyNetQ;
 using HeartForCharity.Services.CampaignStateMachine;
 using HeartForCharity.Services.VolunteerApplicationStateMachine;
 using HeartForCharity.Services.VolunteerJobStateMachine;
@@ -81,6 +80,7 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = 429;
 });
 
+builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddSingleton<IPayPalService, PayPalService>();

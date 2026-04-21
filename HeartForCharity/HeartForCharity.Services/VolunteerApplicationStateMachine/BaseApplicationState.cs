@@ -54,6 +54,9 @@ namespace HeartForCharity.Services.VolunteerApplicationStateMachine
             Status                 = entity.Status.ToString(),
             RejectionReason        = entity.RejectionReason,
             IsCompleted            = entity.IsCompleted,
+            ReviewedByName         = entity.ReviewedByUser?.OrganisationProfile?.Name
+                                  ?? entity.ReviewedByUser?.Username,
+            ReviewedAt             = entity.ReviewedAt,
             AppliedAt              = entity.AppliedAt,
             UpdatedAt              = entity.UpdatedAt
         };

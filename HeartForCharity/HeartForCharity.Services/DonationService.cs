@@ -31,6 +31,9 @@ namespace HeartForCharity.Services
                 query = query.Where(d => d.CampaignId == search.CampaignId);
             if (search.UserProfileId.HasValue)
                 query = query.Where(d => d.UserProfileId == search.UserProfileId);
+            if (!string.IsNullOrWhiteSpace(search.FTS))
+                query = query.Where(d => !d.IsAnonymous && d.UserProfile != null &&
+                    (d.UserProfile.FirstName.Contains(search.FTS) || d.UserProfile.LastName.Contains(search.FTS)));
             if (search.DateFrom.HasValue)
                 query = query.Where(d => d.DonationDateTime >= search.DateFrom);
             if (search.DateTo.HasValue)

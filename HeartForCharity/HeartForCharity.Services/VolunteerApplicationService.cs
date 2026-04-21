@@ -56,7 +56,9 @@ namespace HeartForCharity.Services
                              .ThenInclude(up => up!.User)
                          .Include(va => va.UserProfile)
                              .ThenInclude(up => up!.Address)
-                                 .ThenInclude(a => a!.City);
+                                 .ThenInclude(a => a!.City)
+                         .Include(va => va.ReviewedByUser)
+                             .ThenInclude(u => u!.OrganisationProfile);
 
             if (search.VolunteerJobId.HasValue)
                 query = query.Where(va => va.VolunteerJobId == search.VolunteerJobId);
@@ -66,6 +68,9 @@ namespace HeartForCharity.Services
                 query = query.Where(va => va.Status == status);
             if (search.IsCompleted.HasValue)
                 query = query.Where(va => va.IsCompleted == search.IsCompleted);
+            if (!string.IsNullOrWhiteSpace(search.FTS))
+                query = query.Where(va => va.UserProfile != null &&
+                    (va.UserProfile.FirstName.Contains(search.FTS) || va.UserProfile.LastName.Contains(search.FTS)));
 
             return query;
         }
@@ -97,9 +102,12 @@ namespace HeartForCharity.Services
                 ResumeUrl       = entity.ResumeUrl,
                 Status          = entity.Status.ToString(),
                 RejectionReason = entity.RejectionReason,
-                IsCompleted     = entity.IsCompleted,
-                AppliedAt       = entity.AppliedAt,
-                UpdatedAt       = entity.UpdatedAt
+                IsCompleted      = entity.IsCompleted,
+                ReviewedByName   = entity.ReviewedByUser?.OrganisationProfile?.Name
+                                ?? entity.ReviewedByUser?.Username,
+                ReviewedAt       = entity.ReviewedAt,
+                AppliedAt        = entity.AppliedAt,
+                UpdatedAt        = entity.UpdatedAt
             };
         }
 
@@ -124,7 +132,8 @@ namespace HeartForCharity.Services
 
             var alreadyApplied = await _context.VolunteerApplications
                 .AnyAsync(va => va.UserProfileId == userProfile.UserProfileId
-                             && va.VolunteerJobId == entity.VolunteerJobId);
+                             && va.VolunteerJobId == entity.VolunteerJobId
+                             && va.Status != ApplicationStatus.Withdrawn);
 
             if (alreadyApplied)
                 throw new UserException("You have already applied for this volunteer job.");
@@ -148,15 +157,23 @@ namespace HeartForCharity.Services
             return await GetAsync(search);
         }
 
-        protected override async Task BeforeDelete(VolunteerApplication entity)
+        public async Task<bool> WithdrawAsync(int id)
         {
-            var userProfile = await _context.UserProfiles.FindAsync(entity.UserProfileId);
+            var entity = await _context.VolunteerApplications.FindAsync(id);
+            if (entity == null)
+                return false;
 
+            var userProfile = await _context.UserProfiles.FindAsync(entity.UserProfileId);
             if (userProfile == null || userProfile.UserId != _currentUserService.UserId)
                 throw new ForbiddenException("You can only withdraw your own applications.");
 
             if (entity.Status != ApplicationStatus.Pending)
                 throw new UserException("You can only withdraw pending applications.");
+
+            entity.Status = ApplicationStatus.Withdrawn;
+            entity.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }
