@@ -27,11 +27,8 @@ namespace HeartForCharity.Services
         {
             query = query.Include(n => n.UserProfile);
 
-            var userProfile = _context.UserProfiles
-                .FirstOrDefault(up => up.UserId == _currentUserService.UserId);
-
-            if (userProfile != null)
-                query = query.Where(n => n.UserProfileId == userProfile.UserProfileId);
+            var userId = _currentUserService.UserId;
+            query = query.Where(n => n.UserProfile.UserId == userId);
 
             if (search.IsRead.HasValue)
                 query = query.Where(n => n.IsRead == search.IsRead);

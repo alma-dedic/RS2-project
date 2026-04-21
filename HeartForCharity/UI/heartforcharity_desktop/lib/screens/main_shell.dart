@@ -6,6 +6,7 @@ import 'package:heartforcharity_desktop/screens/campaigns_screen.dart';
 import 'package:heartforcharity_desktop/screens/dashboard_screen.dart';
 import 'package:heartforcharity_desktop/screens/login_screen.dart';
 import 'package:heartforcharity_desktop/screens/profile_screen.dart';
+import 'package:heartforcharity_desktop/screens/reviews_screen.dart';
 import 'package:heartforcharity_desktop/screens/volunteer_jobs_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -25,12 +26,14 @@ class _MainShellState extends State<MainShell> {
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
   ];
 
   final List<_NavItem> _navItems = const [
     _NavItem(icon: Icons.grid_view_outlined, activeIcon: Icons.grid_view, label: 'Dashboard'),
     _NavItem(icon: Icons.volunteer_activism_outlined, activeIcon: Icons.volunteer_activism, label: 'Campaigns'),
     _NavItem(icon: Icons.monitor_heart_outlined, activeIcon: Icons.monitor_heart, label: 'Volunteer jobs'),
+    _NavItem(icon: Icons.star_outline, activeIcon: Icons.star, label: 'Reviews'),
     _NavItem(icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile'),
   ];
 
@@ -74,7 +77,8 @@ class _MainShellState extends State<MainShell> {
                 _buildNavigator(0, const DashboardScreen()),
                 _buildNavigator(1, const CampaignsScreen()),
                 _buildNavigator(2, const VolunteerJobsScreen()),
-                _buildNavigator(3, ProfileScreen(onProfileUpdated: _loadOrgProfile)),
+                _buildNavigator(3, const ReviewsScreen()),
+                _buildNavigator(4, ProfileScreen(onProfileUpdated: _loadOrgProfile)),
               ],
             ),
           ),
@@ -130,7 +134,7 @@ class _Sidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 240,
-      color: const Color(0xFFD1493F),
+      color: Theme.of(context).colorScheme.primary,
       child: Column(
         children: [
           Padding(

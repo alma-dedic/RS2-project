@@ -26,6 +26,8 @@ class _VolunteerJobsScreenState extends State<VolunteerJobsScreen> {
   bool _isLoadingMore = false;
 
   String? _selectedStatus;
+  DateTime? _startDateFrom;
+  DateTime? _startDateTo;
 
   final List<String> _statuses = ['Active', 'Completed', 'Cancelled'];
 
@@ -57,6 +59,8 @@ class _VolunteerJobsScreenState extends State<VolunteerJobsScreen> {
       final filter = VolunteerJobSearchObject(
         fts: _searchController.text.trim().isEmpty ? null : _searchController.text.trim(),
         status: _selectedStatus,
+        startDateFrom: _startDateFrom,
+        startDateTo: _startDateTo,
         page: _currentPage,
         pageSize: _pageSize,
         includeTotalCount: true,
@@ -114,8 +118,9 @@ class _VolunteerJobsScreenState extends State<VolunteerJobsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: colorScheme.surfaceContainerHighest,
       body: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
@@ -133,6 +138,7 @@ class _VolunteerJobsScreenState extends State<VolunteerJobsScreen> {
   }
 
   Widget _buildTopBar() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         Expanded(
@@ -147,22 +153,22 @@ class _VolunteerJobsScreenState extends State<VolunteerJobsScreen> {
               style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Search volunteer jobs...',
-                hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                prefixIcon: const Icon(Icons.search, size: 20, color: Color(0xFF9CA3AF)),
+                hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                prefixIcon: Icon(Icons.search, size: 20, color: colorScheme.onSurfaceVariant),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: colorScheme.surface,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  borderSide: BorderSide(color: colorScheme.outline),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  borderSide: BorderSide(color: colorScheme.outline),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFFD1493F), width: 1.5),
+                  borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
                 ),
               ),
             ),
@@ -174,7 +180,65 @@ class _VolunteerJobsScreenState extends State<VolunteerJobsScreen> {
     );
   }
 
+  Future<void> _pickDate({required bool isFrom}) async {
+    final initial = isFrom ? (_startDateFrom ?? DateTime.now()) : (_startDateTo ?? DateTime.now());
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+    if (picked == null) return;
+    setState(() {
+      if (isFrom) { _startDateFrom = picked; } else { _startDateTo = picked; }
+    });
+    _loadJobs(reset: true);
+  }
+
+  Widget _buildDateButton(String label, DateTime? date, {required bool isFrom}) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final hasValue = date != null;
+    return GestureDetector(
+      onTap: () => _pickDate(isFrom: isFrom),
+      child: Container(
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: hasValue ? colorScheme.primary.withValues(alpha: 0.06) : colorScheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: hasValue ? colorScheme.primary : colorScheme.outline),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.calendar_today_outlined, size: 16, color: hasValue ? colorScheme.primary : colorScheme.onSurfaceVariant),
+            const SizedBox(width: 6),
+            Text(
+              hasValue ? '${date.day}.${date.month}.${date.year}' : label,
+              style: TextStyle(
+                fontSize: 13,
+                color: hasValue ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+            if (hasValue) ...[
+              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: () {
+                  setState(() { if (isFrom) { _startDateFrom = null; } else { _startDateTo = null; } });
+                  _loadJobs(reset: true);
+                },
+                child: Icon(Icons.close, size: 14, color: colorScheme.primary),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFiltersRow() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         _buildDropdown<String?>(
@@ -189,13 +253,17 @@ class _VolunteerJobsScreenState extends State<VolunteerJobsScreen> {
             _loadJobs(reset: true);
           },
         ),
+        const SizedBox(width: 10),
+        _buildDateButton('Start from', _startDateFrom, isFrom: true),
+        const SizedBox(width: 8),
+        _buildDateButton('Start to', _startDateTo, isFrom: false),
         const Spacer(),
         ElevatedButton.icon(
           onPressed: _openAdd,
           icon: const Icon(Icons.add, size: 18),
           label: const Text('Add new volunteer job'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFD1493F),
+            backgroundColor: colorScheme.primary,
             foregroundColor: Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -213,35 +281,37 @@ class _VolunteerJobsScreenState extends State<VolunteerJobsScreen> {
     required List<DropdownMenuItem<T>> items,
     required ValueChanged<T?> onChanged,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       height: 42,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: colorScheme.outline),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
-          hint: Text(hint, style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14)),
+          hint: Text(hint, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14)),
           items: items,
           onChanged: onChanged,
-          style: const TextStyle(color: Color(0xFF111827), fontSize: 14),
-          icon: const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF9CA3AF)),
+          style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+          icon: Icon(Icons.keyboard_arrow_down, size: 20, color: colorScheme.onSurfaceVariant),
         ),
       ),
     );
   }
 
   Widget _buildContent() {
+    final colorScheme = Theme.of(context).colorScheme;
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFD1493F)));
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_jobs.isEmpty) {
-      return const Center(
-        child: Text('No volunteer jobs found.', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 15)),
+      return Center(
+        child: Text('No volunteer jobs found.', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 15)),
       );
     }
 
@@ -250,7 +320,7 @@ class _VolunteerJobsScreenState extends State<VolunteerJobsScreen> {
       children: [
         Text(
           'Showing ${_jobs.length} of $_totalCount volunteer jobs',
-          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
         ),
         const SizedBox(height: 12),
         Expanded(
@@ -268,12 +338,12 @@ class _VolunteerJobsScreenState extends State<VolunteerJobsScreen> {
           const SizedBox(height: 16),
           Center(
             child: _isLoadingMore
-                ? const CircularProgressIndicator(color: Color(0xFFD1493F))
+                ? const CircularProgressIndicator()
                 : OutlinedButton(
                     onPressed: _loadMore,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFD1493F),
-                      side: const BorderSide(color: Color(0xFFD1493F)),
+                      foregroundColor: colorScheme.primary,
+                      side: BorderSide(color: colorScheme.primary),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                     ),
@@ -299,11 +369,12 @@ class _VolunteerJobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return SizedBox(
       height: 130,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -328,10 +399,10 @@ class _VolunteerJobCard extends StatelessWidget {
                             job.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF1A1A2E),
+                              color: colorScheme.onSurface,
                             ),
                           ),
                         ),
@@ -349,15 +420,15 @@ class _VolunteerJobCard extends StatelessWidget {
                         job.description ?? '',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.4),
+                        style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, height: 1.4),
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'Positions filled ${job.positionsFilled}/${job.positionsAvailable}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF374151),
+                        color: colorScheme.onSurface,
                         fontWeight: FontWeight.w500,
                         fontStyle: FontStyle.italic,
                       ),
@@ -412,13 +483,14 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.primary;
     return SizedBox(
       width: 110,
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
-          foregroundColor: const Color(0xFFD1493F),
-          side: const BorderSide(color: Color(0xFFD1493F)),
+          foregroundColor: color,
+          side: BorderSide(color: color),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           padding: const EdgeInsets.symmetric(vertical: 8),
           textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),

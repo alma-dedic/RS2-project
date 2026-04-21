@@ -13,5 +13,7 @@ namespace HeartForCharity.Model.SearchObjects
         public int? OrganisationProfileId { get; set; }
         public bool? IsRemote { get; set; }
         public int? CityId { get; set; }
+        public DateTime? StartDateFrom { get; set; }
+        public DateTime? StartDateTo { get; set; }
     }
 }

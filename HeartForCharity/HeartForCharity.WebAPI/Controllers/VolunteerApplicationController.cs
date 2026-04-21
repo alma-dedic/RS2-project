@@ -45,9 +45,9 @@ namespace HeartForCharity.WebAPI.Controllers
             => await base.Update(id, request);
 
         [Authorize(Roles = "User")]
-        [HttpDelete("{id}")]
-        public override async Task<bool> Delete(int id)
-            => await base.Delete(id);
+        [HttpPatch("{id}/withdraw")]
+        public async Task<bool> Withdraw(int id)
+            => await _applicationService.WithdrawAsync(id);
 
         [Authorize(Roles = "Organisation")]
         [HttpPatch("{id}/approve")]

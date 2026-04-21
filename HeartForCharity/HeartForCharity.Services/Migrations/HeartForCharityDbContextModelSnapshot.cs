@@ -651,6 +651,12 @@ namespace HeartForCharity.Services.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ReviewedByUserId")
+                        .HasColumnType("int");
+
                     b.Property<string>("ResumeUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -669,12 +675,13 @@ namespace HeartForCharity.Services.Migrations
 
                     b.HasKey("VolunteerApplicationId");
 
+                    b.HasIndex("ReviewedByUserId");
+
                     b.HasIndex("Status");
 
                     b.HasIndex("UserProfileId");
 
-                    b.HasIndex("VolunteerJobId", "UserProfileId")
-                        .IsUnique();
+                    b.HasIndex("VolunteerJobId", "UserProfileId");
 
                     b.ToTable("VolunteerApplications");
                 });
@@ -953,6 +960,11 @@ namespace HeartForCharity.Services.Migrations
 
             modelBuilder.Entity("HeartForCharity.Services.Database.VolunteerApplication", b =>
                 {
+                    b.HasOne("HeartForCharity.Services.Database.User", "ReviewedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("HeartForCharity.Services.Database.UserProfile", "UserProfile")
                         .WithMany("VolunteerApplications")
                         .HasForeignKey("UserProfileId")
@@ -964,6 +976,8 @@ namespace HeartForCharity.Services.Migrations
                         .HasForeignKey("VolunteerJobId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("ReviewedByUser");
 
                     b.Navigation("UserProfile");
 

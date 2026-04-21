@@ -60,26 +60,27 @@ class _UsersScreenState extends State<UsersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: colorScheme.surfaceContainerHighest,
       body: Padding(
         padding: const EdgeInsets.all(28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('User Accounts',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+            Text('User Accounts',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
             const SizedBox(height: 20),
-            _buildFiltersRow(),
+            _buildFiltersRow(colorScheme),
             const SizedBox(height: 16),
-            Expanded(child: _buildTable()),
+            Expanded(child: _buildTable(colorScheme)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFiltersRow() {
+  Widget _buildFiltersRow(ColorScheme colorScheme) {
     return Row(
       children: [
         Expanded(
@@ -88,18 +89,19 @@ class _UsersScreenState extends State<UsersScreen> {
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               hintText: 'Search by username or email...',
-              prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF9CA3AF)),
+              prefixIcon: Icon(Icons.search, size: 18, color: colorScheme.onSurfaceVariant),
               isDense: true,
               filled: true,
-              fillColor: Colors.white,
+              fillColor: colorScheme.surface,
               contentPadding: const EdgeInsets.symmetric(vertical: 10),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.outline)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.outline)),
             ),
           ),
         ),
         const SizedBox(width: 12),
         _buildChipFilter(
+          colorScheme: colorScheme,
           label: 'All types',
           options: const {'All': null, 'User': 'User', 'Organisation': 'Organisation', 'Admin': 'Admin'},
           selected: _typeFilter,
@@ -107,6 +109,7 @@ class _UsersScreenState extends State<UsersScreen> {
         ),
         const SizedBox(width: 8),
         _buildChipFilter(
+          colorScheme: colorScheme,
           label: 'All status',
           options: const {'All': null, 'Active': 'true', 'Inactive': 'false'},
           selected: _activeFilter == null ? null : _activeFilter! ? 'true' : 'false',
@@ -120,6 +123,7 @@ class _UsersScreenState extends State<UsersScreen> {
   }
 
   Widget _buildChipFilter({
+    required ColorScheme colorScheme,
     required String label,
     required Map<String, String?> options,
     required String? selected,
@@ -144,42 +148,42 @@ class _UsersScreenState extends State<UsersScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: colorScheme.outline),
         ),
         child: Row(
           children: [
-            Text(currentLabel, style: const TextStyle(fontSize: 13, color: Color(0xFF374151))),
+            Text(currentLabel, style: TextStyle(fontSize: 13, color: colorScheme.onSurface)),
             const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down, size: 16, color: Color(0xFF9CA3AF)),
+            Icon(Icons.keyboard_arrow_down, size: 16, color: colorScheme.onSurfaceVariant),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTable() {
-    if (_loading) return const Center(child: CircularProgressIndicator(color: Color(0xFFD1493F)));
+  Widget _buildTable(ColorScheme colorScheme) {
+    if (_loading) return const Center(child: CircularProgressIndicator());
     final items = _filtered;
     if (items.isEmpty) {
-      return const Center(child: Text('No users found.', style: TextStyle(color: Color(0xFF9CA3AF))));
+      return Center(child: Text('No users found.', style: TextStyle(color: colorScheme.onSurfaceVariant)));
     }
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 2))],
       ),
       child: Column(
         children: [
-          _buildTableHeader(),
+          _buildTableHeader(colorScheme),
           Expanded(
             child: ListView.separated(
               itemCount: items.length,
-              separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF3F4F6)),
-              itemBuilder: (_, i) => _buildUserRow(items[i]),
+              separatorBuilder: (context, index) => Divider(height: 1, color: colorScheme.outlineVariant),
+              itemBuilder: (_, i) => _buildUserRow(items[i], colorScheme),
             ),
           ),
         ],
@@ -187,27 +191,27 @@ class _UsersScreenState extends State<UsersScreen> {
     );
   }
 
-  Widget _buildTableHeader() {
+  Widget _buildTableHeader(ColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Expanded(flex: 3, child: Text('Username', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-          Expanded(flex: 4, child: Text('Email', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-          Expanded(flex: 2, child: Text('Type', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-          Expanded(flex: 2, child: Text('Joined', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-          Expanded(flex: 1, child: Text('Status', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-          SizedBox(width: 60),
+          Expanded(flex: 3, child: Text('Username', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant))),
+          Expanded(flex: 4, child: Text('Email', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant))),
+          Expanded(flex: 2, child: Text('Type', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant))),
+          Expanded(flex: 2, child: Text('Joined', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant))),
+          Expanded(flex: 1, child: Text('Status', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant))),
+          const SizedBox(width: 60),
         ],
       ),
     );
   }
 
-  Widget _buildUserRow(UserResponse user) {
+  Widget _buildUserRow(UserResponse user, ColorScheme colorScheme) {
     final typeColor = switch (user.userType) {
       'Admin' => const Color(0xFF7C3AED),
       'Organisation' => const Color(0xFF3B82F6),
@@ -224,16 +228,16 @@ class _UsersScreenState extends State<UsersScreen> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor: const Color(0xFFD1493F).withValues(alpha: 0.12),
+                  backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
                   child: Text(
                     user.username.isNotEmpty ? user.username[0].toUpperCase() : '?',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFFD1493F)),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.primary),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(user.username,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E)),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
                       overflow: TextOverflow.ellipsis),
                 ),
               ],
@@ -242,7 +246,7 @@ class _UsersScreenState extends State<UsersScreen> {
           Expanded(
             flex: 4,
             child: Text(user.email,
-                style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
                 overflow: TextOverflow.ellipsis),
           ),
           Expanded(
@@ -262,7 +266,7 @@ class _UsersScreenState extends State<UsersScreen> {
             flex: 2,
             child: Text(
               DateFormat('dd MMM yyyy').format(user.createdAt.toLocal()),
-              style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
             ),
           ),
           Expanded(
@@ -270,7 +274,7 @@ class _UsersScreenState extends State<UsersScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: user.isActive ? const Color(0xFF10B981).withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
+                color: user.isActive ? colorScheme.secondary.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -278,7 +282,7 @@ class _UsersScreenState extends State<UsersScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: user.isActive ? const Color(0xFF10B981) : const Color(0xFF6B7280),
+                  color: user.isActive ? colorScheme.secondary : colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
@@ -287,8 +291,6 @@ class _UsersScreenState extends State<UsersScreen> {
             width: 60,
             child: Switch(
               value: user.isActive,
-              activeThumbColor: const Color(0xFF10B981),
-              activeTrackColor: const Color(0xFF10B981).withValues(alpha: 0.4),
               onChanged: (_) => _toggleActive(user),
             ),
           ),

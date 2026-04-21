@@ -79,12 +79,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
       initialDate: initial,
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: Color(0xFFD1493F)),
-        ),
-        child: child!,
-      ),
+      builder: (ctx, child) => child!,
     );
     if (picked == null) return;
     setState(() {
@@ -199,7 +194,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
               TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
-                style: TextButton.styleFrom(foregroundColor: const Color(0xFFD1493F)),
+                style: TextButton.styleFrom(foregroundColor: Theme.of(ctx).colorScheme.primary),
                 child: const Text('Confirm'),
               ),
             ],
@@ -210,11 +205,12 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isActive = widget.job?.status == 'Active';
     final canDelete = isActive && (widget.job?.positionsFilled ?? 0) == 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: colorScheme.surfaceContainerHighest,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(32, 20, 32, 20),
         child: Column(
@@ -222,7 +218,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
             Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Color(0xFF1A1A2E)),
+                  icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
                   onPressed: () => Navigator.of(context).pop(),
                   splashRadius: 20,
                 ),
@@ -239,7 +235,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                     width: 600,
                     padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -257,10 +253,10 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                           Center(
                             child: Text(
                               widget.isEdit ? 'Edit volunteer job' : 'New volunteer job',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFFD1493F),
+                                color: colorScheme.primary,
                               ),
                             ),
                           ),
@@ -272,7 +268,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                             controller: _titleController,
                             enabled: !widget.isEdit || isActive,
                             maxLength: 200,
-                            decoration: _inputDecoration('Enter job title'),
+                            decoration: _inputDecoration('Enter job title', colorScheme),
                             validator: (v) => (v == null || v.trim().isEmpty) ? 'Title is required' : null,
                           ),
                           const SizedBox(height: 12),
@@ -284,7 +280,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                             maxLines: 3,
                             maxLength: 4000,
                             enabled: !widget.isEdit || isActive,
-                            decoration: _inputDecoration('Enter job description'),
+                            decoration: _inputDecoration('Enter job description', colorScheme),
                           ),
                           const SizedBox(height: 12),
 
@@ -295,7 +291,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                             maxLines: 2,
                             maxLength: 2000,
                             enabled: !widget.isEdit || isActive,
-                            decoration: _inputDecoration('Enter requirements (optional)'),
+                            decoration: _inputDecoration('Enter requirements (optional)', colorScheme),
                           ),
                           const SizedBox(height: 12),
 
@@ -311,6 +307,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                                       value: _startDate,
                                       hint: 'Select start date',
                                       onTap: (!widget.isEdit || isActive) ? () => _pickDate(isStart: true) : null,
+                                      colorScheme: colorScheme,
                                     ),
                                   ],
                                 ),
@@ -326,6 +323,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                                       value: _endDate,
                                       hint: 'Select end date',
                                       onTap: (!widget.isEdit || isActive) ? () => _pickDate(isStart: false) : null,
+                                      colorScheme: colorScheme,
                                     ),
                                   ],
                                 ),
@@ -347,7 +345,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                                       enabled: !widget.isEdit || isActive,
                                       keyboardType: TextInputType.number,
                                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                      decoration: _inputDecoration('e.g. 10'),
+                                      decoration: _inputDecoration('e.g. 10', colorScheme),
                                       validator: (v) {
                                         if (v == null || v.trim().isEmpty) return 'Required';
                                         final n = int.tryParse(v.trim());
@@ -365,7 +363,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                                   children: [
                                     _buildLabel('Category'),
                                     const SizedBox(height: 6),
-                                    _buildCategoryDropdown(enabled: !widget.isEdit || isActive),
+                                    _buildCategoryDropdown(enabled: !widget.isEdit || isActive, colorScheme: colorScheme),
                                   ],
                                 ),
                               ),
@@ -381,12 +379,11 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                                 onChanged: (!widget.isEdit || isActive)
                                     ? (val) => setState(() => _isRemote = val)
                                     : null,
-                                activeThumbColor: const Color(0xFFD1493F),
                               ),
                               const SizedBox(width: 8),
-                              const Text(
+                              Text(
                                 'Remote position',
-                                style: TextStyle(fontSize: 14, color: Color(0xFF374151)),
+                                style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
                               ),
                             ],
                           ),
@@ -399,8 +396,8 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                                 OutlinedButton(
                                   onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: const Color(0xFF374151),
-                                    side: const BorderSide(color: Color(0xFFD1D5DB)),
+                                    foregroundColor: colorScheme.onSurface,
+                                    side: BorderSide(color: colorScheme.outlineVariant),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                     padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                                   ),
@@ -410,7 +407,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                                 ElevatedButton(
                                   onPressed: _isLoading ? null : _save,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFD1493F),
+                                    backgroundColor: colorScheme.primary,
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -430,7 +427,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
 
                           if (widget.isEdit && isActive) ...[
                             const SizedBox(height: 20),
-                            const Divider(color: Color(0xFFE5E7EB)),
+                            Divider(color: colorScheme.outline),
                             const SizedBox(height: 16),
                             Row(
                               children: [
@@ -438,8 +435,8 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                                   child: OutlinedButton(
                                     onPressed: _isLoading ? null : _completeJob,
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFF059669),
-                                      side: const BorderSide(color: Color(0xFF059669)),
+                                      foregroundColor: colorScheme.secondary,
+                                      side: BorderSide(color: colorScheme.secondary),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                       padding: const EdgeInsets.symmetric(vertical: 14),
                                     ),
@@ -451,8 +448,8 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                                   child: OutlinedButton(
                                     onPressed: _isLoading ? null : _cancelJob,
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFFEF4444),
-                                      side: const BorderSide(color: Color(0xFFEF4444)),
+                                      foregroundColor: colorScheme.error,
+                                      side: BorderSide(color: colorScheme.error),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                       padding: const EdgeInsets.symmetric(vertical: 14),
                                     ),
@@ -466,7 +463,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                               Center(
                                 child: TextButton(
                                   onPressed: _isLoading ? null : _deleteJob,
-                                  style: TextButton.styleFrom(foregroundColor: const Color(0xFF9CA3AF)),
+                                  style: TextButton.styleFrom(foregroundColor: colorScheme.onSurfaceVariant),
                                   child: const Text(
                                     'Delete job',
                                     style: TextStyle(fontSize: 13, decoration: TextDecoration.underline),
@@ -481,7 +478,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                             Center(
                               child: Text(
                                 'This job is ${widget.job!.status?.toLowerCase()} and cannot be edited.',
-                                style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                                style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -506,37 +503,34 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
   }
 
   Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
-    );
+    return Text(text, style: Theme.of(context).textTheme.titleSmall);
   }
 
-  InputDecoration _inputDecoration(String hint) {
+  InputDecoration _inputDecoration(String hint, ColorScheme colorScheme) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 14),
+      hintStyle: TextStyle(color: colorScheme.outlineVariant, fontSize: 14),
       filled: true,
-      fillColor: const Color(0xFFF9FAFB),
+      fillColor: colorScheme.surfaceContainerLow,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFD1493F), width: 1.5)),
-      errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFEF4444))),
-      focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5)),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.outline)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.outline)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.primary, width: 1.5)),
+      errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.error)),
+      focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.error, width: 1.5)),
     );
   }
 
-  Widget _buildDateField({required DateTime? value, required String hint, VoidCallback? onTap}) {
+  Widget _buildDateField({required DateTime? value, required String hint, VoidCallback? onTap, required ColorScheme colorScheme}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 48,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: onTap != null ? const Color(0xFFF9FAFB) : const Color(0xFFF3F4F6),
+          color: onTap != null ? colorScheme.surfaceContainerLow : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: colorScheme.outline),
         ),
         child: Row(
           children: [
@@ -547,39 +541,39 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                     : hint,
                 style: TextStyle(
                   fontSize: 14,
-                  color: value != null ? const Color(0xFF111827) : const Color(0xFFD1D5DB),
+                  color: value != null ? colorScheme.onSurface : colorScheme.outlineVariant,
                 ),
               ),
             ),
             Icon(Icons.calendar_today_outlined, size: 18,
-                color: onTap != null ? const Color(0xFF9CA3AF) : const Color(0xFFD1D5DB)),
+                color: onTap != null ? colorScheme.onSurfaceVariant : colorScheme.outlineVariant),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCategoryDropdown({bool enabled = true}) {
+  Widget _buildCategoryDropdown({bool enabled = true, required ColorScheme colorScheme}) {
     return Container(
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: enabled ? const Color(0xFFF9FAFB) : const Color(0xFFF3F4F6),
+        color: enabled ? colorScheme.surfaceContainerLow : const Color(0xFFF3F4F6),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: colorScheme.outline),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int?>(
           value: _categories.any((c) => c.categoryId == _selectedCategoryId) ? _selectedCategoryId : null,
-          hint: const Text('Select category', style: TextStyle(color: Color(0xFFD1D5DB), fontSize: 14)),
+          hint: Text('Select category', style: TextStyle(color: colorScheme.outlineVariant, fontSize: 14)),
           isExpanded: true,
           onChanged: enabled ? (val) => setState(() => _selectedCategoryId = val) : null,
           items: [
             const DropdownMenuItem(value: null, child: Text('No category')),
             ..._categories.map((c) => DropdownMenuItem(value: c.categoryId, child: Text(c.name))),
           ],
-          style: const TextStyle(color: Color(0xFF111827), fontSize: 14),
-          icon: const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF9CA3AF)),
+          style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+          icon: Icon(Icons.keyboard_arrow_down, size: 20, color: colorScheme.onSurfaceVariant),
         ),
       ),
     );

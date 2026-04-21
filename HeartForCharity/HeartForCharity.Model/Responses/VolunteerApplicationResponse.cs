@@ -22,6 +22,8 @@ namespace HeartForCharity.Model.Responses
         public string Status { get; set; } = null!;
         public string? RejectionReason { get; set; }
         public bool IsCompleted { get; set; }
+        public string? ReviewedByName { get; set; }
+        public DateTime? ReviewedAt { get; set; }
         public DateTime AppliedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

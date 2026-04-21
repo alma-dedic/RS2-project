@@ -134,8 +134,9 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: colorScheme.surfaceContainerHighest,
       body: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
@@ -153,6 +154,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
   }
 
   Widget _buildTopBar() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         Expanded(
@@ -167,22 +169,22 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
               style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Search campaigns...',
-                hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                prefixIcon: const Icon(Icons.search, size: 20, color: Color(0xFF9CA3AF)),
+                hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                prefixIcon: Icon(Icons.search, size: 20, color: colorScheme.onSurfaceVariant),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: colorScheme.surface,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  borderSide: BorderSide(color: colorScheme.outline),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  borderSide: BorderSide(color: colorScheme.outline),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFFD1493F), width: 1.5),
+                  borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
                 ),
               ),
             ),
@@ -195,6 +197,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
   }
 
   Widget _buildFiltersRow() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         _buildDropdown<int?>(
@@ -228,7 +231,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
           icon: const Icon(Icons.add, size: 18),
           label: const Text('Add new campaign'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFD1493F),
+            backgroundColor: colorScheme.primary,
             foregroundColor: Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -246,37 +249,39 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
     required List<DropdownMenuItem<T>> items,
     required ValueChanged<T?> onChanged,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       height: 42,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: colorScheme.outline),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
-          hint: Text(hint, style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14)),
+          hint: Text(hint, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14)),
           items: items,
           onChanged: onChanged,
-          style: const TextStyle(color: Color(0xFF111827), fontSize: 14),
-          icon: const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF9CA3AF)),
+          style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+          icon: Icon(Icons.keyboard_arrow_down, size: 20, color: colorScheme.onSurfaceVariant),
         ),
       ),
     );
   }
 
   Widget _buildContent() {
+    final colorScheme = Theme.of(context).colorScheme;
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFD1493F)));
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_campaigns.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No campaigns found.',
-          style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
+          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 15),
         ),
       );
     }
@@ -286,7 +291,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
       children: [
         Text(
           'Showing ${_campaigns.length} of $_totalCount campaigns',
-          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
         ),
         const SizedBox(height: 12),
         Expanded(
@@ -304,12 +309,12 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
           const SizedBox(height: 16),
           Center(
             child: _isLoadingMore
-                ? const CircularProgressIndicator(color: Color(0xFFD1493F))
+                ? const CircularProgressIndicator()
                 : OutlinedButton(
                     onPressed: _loadMore,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFD1493F),
-                      side: const BorderSide(color: Color(0xFFD1493F)),
+                      foregroundColor: colorScheme.primary,
+                      side: BorderSide(color: colorScheme.primary),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                     ),
@@ -335,6 +340,7 @@ class _CampaignCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final coverMedia = campaign.campaignMedias.where((m) => m.isCover).firstOrNull ??
         campaign.campaignMedias.firstOrNull;
     final progress = campaign.targetAmount > 0
@@ -345,7 +351,7 @@ class _CampaignCard extends StatelessWidget {
       height: 130,
       child: Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -370,9 +376,9 @@ class _CampaignCard extends StatelessWidget {
                   ? Image.network(
                       coverMedia!.url!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _imagePlaceholder(),
+                      errorBuilder: (_, _, _) => _imagePlaceholder(colorScheme),
                     )
-                  : _imagePlaceholder(),
+                  : _imagePlaceholder(colorScheme),
             ),
           ),
           // Info
@@ -386,10 +392,10 @@ class _CampaignCard extends StatelessWidget {
                     children: [
                       Text(
                         campaign.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1A1A2E),
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -401,26 +407,26 @@ class _CampaignCard extends StatelessWidget {
                     campaign.description ?? '',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF6B7280),
+                      color: colorScheme.onSurfaceVariant,
                       height: 1.4,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     '\$${campaign.currentAmount.toStringAsFixed(2)} out of \$${campaign.targetAmount.toStringAsFixed(2)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF374151),
+                      color: colorScheme.onSurface,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 6),
                   LinearProgressIndicator(
                     value: progress,
-                    backgroundColor: const Color(0xFFE5E7EB),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFD1493F)),
+                    backgroundColor: colorScheme.outline,
+                    valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
                     minHeight: 6,
                     borderRadius: BorderRadius.circular(4),
                   ),
@@ -448,11 +454,11 @@ class _CampaignCard extends StatelessWidget {
     );
   }
 
-  Widget _imagePlaceholder() {
+  Widget _imagePlaceholder(ColorScheme colorScheme) {
     return Container(
-      color: const Color(0xFFE5E7EB),
-      child: const Center(
-        child: Icon(Icons.image_outlined, size: 40, color: Color(0xFF9CA3AF)),
+      color: colorScheme.outline,
+      child: Center(
+        child: Icon(Icons.image_outlined, size: 40, color: colorScheme.onSurfaceVariant),
       ),
     );
   }
@@ -466,7 +472,7 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const color = Color(0xFFD1493F);
+    final color = Theme.of(context).colorScheme.primary;
     return SizedBox(
       width: 100,
       child: OutlinedButton(

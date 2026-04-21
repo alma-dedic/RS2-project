@@ -115,70 +115,60 @@ class _RegisterScreenState extends State<RegisterScreen> {
   InputDecoration _inputDecoration({
     required String hint,
     required IconData icon,
+    required ColorScheme colorScheme,
     Widget? suffixIcon,
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 14),
-      prefixIcon: Icon(icon, size: 18, color: const Color(0xFF9CA3AF)),
+      hintStyle: TextStyle(color: colorScheme.outlineVariant, fontSize: 14),
+      prefixIcon: Icon(icon, size: 18, color: colorScheme.onSurfaceVariant),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: const Color(0xFFF9FAFB),
+      fillColor: colorScheme.surfaceContainerLow,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        borderSide: BorderSide(color: colorScheme.outline),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        borderSide: BorderSide(color: colorScheme.outline),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFD1493F), width: 1.5),
+        borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFEF4444)),
+        borderSide: BorderSide(color: colorScheme.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+        borderSide: BorderSide(color: colorScheme.error, width: 1.5),
       ),
     );
   }
 
-  static const _labelStyle = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w500,
-    color: Color(0xFF374151),
-  );
-
-  static const _sectionStyle = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
-    color: Color(0xFF1A1A2E),
-  );
-
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: colorScheme.surfaceContainerHighest,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 24),
-          child: _registered ? _buildSuccessCard() : _buildFormCard(),
+          child: _registered ? _buildSuccessCard(colorScheme) : _buildFormCard(colorScheme),
         ),
       ),
     );
   }
 
-  Widget _buildSuccessCard() {
+  Widget _buildSuccessCard(ColorScheme colorScheme) {
     return Container(
       width: 420,
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -191,17 +181,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check_circle_outline, size: 64, color: Color(0xFF22C55E)),
+          Icon(Icons.check_circle_outline, size: 64, color: colorScheme.secondary),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Registration Successful',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: colorScheme.onSurface),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Your organisation account has been created.\nYou can now sign in.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF), height: 1.5),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, height: 1.5),
           ),
           const SizedBox(height: 24),
           SizedBox(
@@ -210,7 +200,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD1493F),
+                backgroundColor: colorScheme.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -226,12 +216,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildFormCard(ColorScheme colorScheme) {
     return Container(
       width: 780,
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 28),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -249,14 +239,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             // Header
             Image.asset('assets/logo.png', height: 40),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Create your account',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: colorScheme.onSurface),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Register your organisation to get started',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
 
@@ -266,19 +256,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Left: Organisation Info
-                  Expanded(child: _buildOrgPanel()),
+                  Expanded(child: _buildOrgPanel(colorScheme)),
 
                   // Vertical divider
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Container(
                       width: 1,
-                      color: const Color(0xFFE5E7EB),
+                      color: colorScheme.outline,
                     ),
                   ),
 
                   // Right: Account Info
-                  Expanded(child: _buildAccountPanel()),
+                  Expanded(child: _buildAccountPanel(colorScheme)),
                 ],
               ),
             ),
@@ -290,18 +280,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF2F2),
+                  color: colorScheme.error.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFFECACA)),
+                  border: Border.all(color: colorScheme.error.withValues(alpha: 0.25)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.error_outline, size: 16, color: Color(0xFFDC2626)),
+                    Icon(Icons.error_outline, size: 16, color: colorScheme.error),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Color(0xFFDC2626), fontSize: 13),
+                        style: TextStyle(color: colorScheme.error, fontSize: 13),
                       ),
                     ),
                   ],
@@ -318,7 +308,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _register,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD1493F),
+                  backgroundColor: colorScheme.primary,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -342,20 +332,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   'Already have an account? ',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                  style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
                 ),
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
                     onTap: () => Navigator.of(context).pop(),
-                    child: const Text(
+                    child: Text(
                       'Sign In',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFFD1493F),
+                        color: colorScheme.primary,
                       ),
                     ),
                   ),
@@ -368,13 +358,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildOrgPanel() {
+  Widget _buildOrgPanel(ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Organisation Information', style: _sectionStyle),
+        Text('Organisation Information', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
         const SizedBox(height: 4),
-        const Divider(color: Color(0xFFE5E7EB)),
+        Divider(color: colorScheme.outline),
         const SizedBox(height: 8),
 
         _buildField(
@@ -382,6 +372,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           controller: _orgNameController,
           hint: 'Enter organisation name',
           icon: Icons.business_outlined,
+          colorScheme: colorScheme,
           validator: (v) {
             if (v == null || v.isEmpty) return 'Organisation name is required';
             if (v.length > 200) return 'Max 200 characters';
@@ -395,6 +386,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           controller: _contactEmailController,
           hint: 'Contact email',
           icon: Icons.alternate_email,
+          colorScheme: colorScheme,
           keyboardType: TextInputType.emailAddress,
           validator: (v) {
             if (v != null && v.isNotEmpty) {
@@ -412,6 +404,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           controller: _contactPhoneController,
           hint: 'Contact phone',
           icon: Icons.phone_outlined,
+          colorScheme: colorScheme,
           keyboardType: TextInputType.phone,
           validator: (v) {
             if (v != null && v.length > 20) return 'Max 20 characters';
@@ -425,6 +418,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           controller: _descriptionController,
           hint: 'Briefly describe your organisation',
           icon: Icons.description_outlined,
+          colorScheme: colorScheme,
           validator: (v) {
             if (v != null && v.length > 2000) return 'Max 2000 characters';
             return null;
@@ -434,13 +428,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildAccountPanel() {
+  Widget _buildAccountPanel(ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Account Information', style: _sectionStyle),
+        Text('Account Information', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
         const SizedBox(height: 4),
-        const Divider(color: Color(0xFFE5E7EB)),
+        Divider(color: colorScheme.outline),
         const SizedBox(height: 8),
 
         _buildField(
@@ -448,6 +442,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           controller: _usernameController,
           hint: 'Enter username',
           icon: Icons.person_outline,
+          colorScheme: colorScheme,
           validator: (v) {
             if (v == null || v.isEmpty) return 'Username is required';
             if (v.length > 100) return 'Max 100 characters';
@@ -461,6 +456,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           controller: _emailController,
           hint: 'Enter email',
           icon: Icons.email_outlined,
+          colorScheme: colorScheme,
           keyboardType: TextInputType.emailAddress,
           validator: (v) {
             if (v == null || v.isEmpty) return 'Email is required';
@@ -477,12 +473,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
           controller: _passwordController,
           hint: 'Min 8 characters',
           icon: Icons.lock_outline,
+          colorScheme: colorScheme,
           obscure: _obscurePassword,
           suffixIcon: IconButton(
             icon: Icon(
               _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
               size: 18,
-              color: const Color(0xFF9CA3AF),
+              color: colorScheme.onSurfaceVariant,
             ),
             onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
           ),
@@ -498,7 +495,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         if (_password.isNotEmpty) ...[
           const SizedBox(height: 8),
-          _buildPasswordChecklist(),
+          _buildPasswordChecklist(colorScheme),
         ],
         const SizedBox(height: 10),
 
@@ -507,12 +504,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
           controller: _confirmPasswordController,
           hint: 'Re-enter password',
           icon: Icons.lock_outline,
+          colorScheme: colorScheme,
           obscure: _obscureConfirmPassword,
           suffixIcon: IconButton(
             icon: Icon(
               _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
               size: 18,
-              color: const Color(0xFF9CA3AF),
+              color: colorScheme.onSurfaceVariant,
             ),
             onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
           ),
@@ -526,37 +524,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildPasswordChecklist() {
+  Widget _buildPasswordChecklist(ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildCheckRow('At least 8 characters', _password.length >= 8),
-        _buildCheckRow('One uppercase letter', RegExp(r'[A-Z]').hasMatch(_password)),
-        _buildCheckRow('One lowercase letter', RegExp(r'[a-z]').hasMatch(_password)),
-        _buildCheckRow('One number', RegExp(r'[0-9]').hasMatch(_password)),
-        _buildCheckRow('One special character (!@#\$%^&*)', RegExp(r'[!@#$%^&*()\-_=+{}|<>?]').hasMatch(_password)),
+        _buildCheckRow('At least 8 characters', _password.length >= 8, colorScheme),
+        _buildCheckRow('One uppercase letter', RegExp(r'[A-Z]').hasMatch(_password), colorScheme),
+        _buildCheckRow('One lowercase letter', RegExp(r'[a-z]').hasMatch(_password), colorScheme),
+        _buildCheckRow('One number', RegExp(r'[0-9]').hasMatch(_password), colorScheme),
+        _buildCheckRow('One special character (!@#\$%^&*)', RegExp(r'[!@#$%^&*()\-_=+{}|<>?]').hasMatch(_password), colorScheme),
       ],
     );
   }
 
-  Widget _buildCheckRow(String label, bool met) {
+  Widget _buildCheckRow(String label, bool met, ColorScheme colorScheme) {
+    final color = met ? colorScheme.secondary : colorScheme.onSurfaceVariant;
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: Row(
         children: [
-          Icon(
-            met ? Icons.check_circle : Icons.radio_button_unchecked,
-            size: 14,
-            color: met ? const Color(0xFF22C55E) : const Color(0xFF9CA3AF),
-          ),
+          Icon(met ? Icons.check_circle : Icons.radio_button_unchecked, size: 14, color: color),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: met ? const Color(0xFF22C55E) : const Color(0xFF9CA3AF),
-            ),
-          ),
+          Text(label, style: TextStyle(fontSize: 12, color: color)),
         ],
       ),
     );
@@ -567,6 +556,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required TextEditingController controller,
     required String hint,
     required IconData icon,
+    required ColorScheme colorScheme,
     TextInputType? keyboardType,
     bool obscure = false,
     Widget? suffixIcon,
@@ -576,15 +566,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: _labelStyle),
+        Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: colorScheme.onSurface)),
         const SizedBox(height: 6),
         TextFormField(
           controller: controller,
           obscureText: obscure,
           keyboardType: keyboardType,
           maxLines: maxLines,
-          style: const TextStyle(fontSize: 14, color: Color(0xFF111827)),
-          decoration: _inputDecoration(hint: hint, icon: icon, suffixIcon: suffixIcon),
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+          decoration: _inputDecoration(hint: hint, icon: icon, colorScheme: colorScheme, suffixIcon: suffixIcon),
           validator: validator,
         ),
       ],

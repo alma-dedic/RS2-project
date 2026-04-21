@@ -167,7 +167,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => Dialog(
-          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 440),
@@ -179,13 +178,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text('Change password',
-                            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+                            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Theme.of(ctx).colorScheme.onSurface)),
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(ctx).pop(),
-                        icon: const Icon(Icons.close, size: 20, color: Color(0xFF6B7280)),
+                        icon: Icon(Icons.close, size: 20, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
                         splashRadius: 18,
                       ),
                     ],
@@ -233,7 +232,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       OutlinedButton(
                         onPressed: isSaving ? null : () => Navigator.of(ctx).pop(),
-                        style: _outlinedStyle(),
+                        style: _outlinedStyle(Theme.of(ctx).colorScheme),
                         child: const Text('Cancel'),
                       ),
                       const SizedBox(width: 12),
@@ -272,7 +271,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   });
                                 }
                               },
-                        style: _primaryStyle(),
+                        style: _primaryStyle(Theme.of(ctx).colorScheme),
                         child: isSaving
                             ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                             : const Text('Change password'),
@@ -296,7 +295,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => Dialog(
-          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 460),
@@ -308,39 +306,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text('Delete account',
-                            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFFEF4444))),
+                            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Theme.of(ctx).colorScheme.error)),
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(ctx).pop(),
-                        icon: const Icon(Icons.close, size: 20, color: Color(0xFF6B7280)),
+                        icon: Icon(Icons.close, size: 20, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
                         splashRadius: 18,
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'This action cannot be undone. Your account will be deactivated immediately and you will be logged out.',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.5),
+                    style: TextStyle(fontSize: 13, color: Theme.of(ctx).colorScheme.onSurfaceVariant, height: 1.5),
                   ),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
+                      color: Theme.of(ctx).colorScheme.error.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFFECACA)),
+                      border: Border.all(color: Theme.of(ctx).colorScheme.error.withValues(alpha: 0.25)),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Note: accounts with active campaigns or volunteer jobs cannot be deleted. Please complete or cancel them first.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFFEF4444), height: 1.4),
+                      style: TextStyle(fontSize: 12, color: Theme.of(ctx).colorScheme.error, height: 1.4),
                     ),
                   ),
                   const SizedBox(height: 20),
                   Text(
                     'Type "$orgName" to confirm:',
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF374151), fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 13, color: Theme.of(ctx).colorScheme.onSurface, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -349,11 +347,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: const TextStyle(fontSize: 14),
                     decoration: InputDecoration(
                       hintText: orgName,
-                      hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                      hintStyle: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+                        borderSide: BorderSide(color: Theme.of(ctx).colorScheme.error, width: 1.5),
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
@@ -364,7 +362,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       OutlinedButton(
                         onPressed: () => Navigator.of(ctx).pop(),
-                        style: _outlinedStyle(),
+                        style: _outlinedStyle(Theme.of(ctx).colorScheme),
                         child: const Text('Cancel'),
                       ),
                       const SizedBox(width: 12),
@@ -390,9 +388,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               }
                             : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFEF4444),
+                          backgroundColor: Theme.of(ctx).colorScheme.error,
                           foregroundColor: Colors.white,
-                          disabledBackgroundColor: const Color(0xFFFCA5A5),
+                          disabledBackgroundColor: Theme.of(ctx).colorScheme.error.withValues(alpha: 0.4),
                           elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -412,8 +410,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: colorScheme.surfaceContainerHighest,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(32, 32, 32, 20),
         child: Column(
@@ -421,7 +420,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFD1493F)))
+                  ? const Center(child: CircularProgressIndicator())
                   : _profile == null
                       ? const Center(child: Text('Could not load profile.'))
                       : SingleChildScrollView(
@@ -445,10 +444,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(28),
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration(colorScheme),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -464,13 +464,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (_isEditing)
                       TextField(
                         controller: _nameController,
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)),
-                        decoration: _fieldDecoration('Organisation name'),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: colorScheme.onSurface),
+                        decoration: _fieldDecoration('Organisation name', colorScheme),
                       )
                     else
                       Text(
                         _profile!.name,
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: colorScheme.onSurface),
                       ),
                     const SizedBox(height: 6),
                     Row(
@@ -478,7 +478,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         if (_profile!.organisationTypeName != null)
                           Text(
                             _profile!.organisationTypeName!,
-                            style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
                           ),
                         if (_profile!.organisationTypeName != null) const SizedBox(width: 12),
                         _VerifiedBadge(isVerified: _profile!.isVerified),
@@ -494,8 +494,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: const Icon(Icons.edit_outlined, size: 16),
                   label: const Text('Edit profile'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFD1493F),
-                    side: const BorderSide(color: Color(0xFFD1493F)),
+                    foregroundColor: colorScheme.primary,
+                    side: BorderSide(color: colorScheme.primary),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                     textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
@@ -506,13 +506,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     OutlinedButton(
                       onPressed: _isSaving ? null : _cancelEditing,
-                      style: _outlinedStyle(),
+                      style: _outlinedStyle(colorScheme),
                       child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
                       onPressed: _isSaving ? null : _save,
-                      style: _primaryStyle(),
+                      style: _primaryStyle(colorScheme),
                       child: _isSaving
                           ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                           : const Text('Save'),
@@ -522,20 +522,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          const Divider(color: Color(0xFFE5E7EB)),
+          Divider(color: colorScheme.outline),
           const SizedBox(height: 20),
           if (_isEditing) ...[
-            const Text('About', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+            Text('About', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
             const SizedBox(height: 8),
             TextField(
               controller: _descController,
               maxLines: 4,
               maxLength: 1000,
               style: const TextStyle(fontSize: 13),
-              decoration: _fieldDecoration('Describe your organisation...'),
+              decoration: _fieldDecoration('Describe your organisation...', colorScheme),
             ),
             const SizedBox(height: 20),
-            const Text('Contact', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+            Text('Contact', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -543,7 +543,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: TextField(
                     controller: _emailController,
                     style: const TextStyle(fontSize: 13),
-                    decoration: _fieldDecoration('Contact email').copyWith(prefixIcon: const Icon(Icons.email_outlined, size: 18, color: Color(0xFF9CA3AF))),
+                    decoration: _fieldDecoration('Contact email', colorScheme).copyWith(prefixIcon: Icon(Icons.email_outlined, size: 18, color: colorScheme.onSurfaceVariant)),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -551,16 +551,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: TextField(
                     controller: _phoneController,
                     style: const TextStyle(fontSize: 13),
-                    decoration: _fieldDecoration('Contact phone').copyWith(prefixIcon: const Icon(Icons.phone_outlined, size: 18, color: Color(0xFF9CA3AF))),
+                    decoration: _fieldDecoration('Contact phone', colorScheme).copyWith(prefixIcon: Icon(Icons.phone_outlined, size: 18, color: colorScheme.onSurfaceVariant)),
                   ),
                 ),
               ],
             ),
           ] else ...[
             if (_profile!.description != null && _profile!.description!.isNotEmpty) ...[
-              const Text('About', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+              Text('About', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
               const SizedBox(height: 8),
-              Text(_profile!.description!, style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.6)),
+              Text(_profile!.description!, style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, height: 1.6)),
               const SizedBox(height: 20),
             ],
             if (_profile!.contactEmail != null)
@@ -584,6 +584,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildLogo() {
+    final colorScheme = Theme.of(context).colorScheme;
     const size = 80.0;
     Widget inner;
 
@@ -600,8 +601,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFFD1493F).withValues(alpha: 0.08),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.5),
+        color: colorScheme.primary.withValues(alpha: 0.08),
+        border: Border.all(color: colorScheme.outline, width: 1.5),
       ),
       child: ClipOval(child: inner),
     );
@@ -619,9 +620,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Container(
               width: 26,
               height: 26,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Color(0xFFD1493F),
+                color: colorScheme.primary,
               ),
               child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
             ),
@@ -632,16 +633,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _logoPlaceholder() {
+    final colorScheme = Theme.of(context).colorScheme;
     final initials = (_profile?.name ?? 'O').substring(0, 1).toUpperCase();
     return Center(
-      child: Text(initials, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: Color(0xFFD1493F))),
+      child: Text(initials, style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: colorScheme.primary)),
     );
   }
 
   Widget _buildSecurityCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration(colorScheme),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         leading: Container(
@@ -649,26 +652,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
           height: 40,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: const Color(0xFFD1493F).withValues(alpha: 0.08),
+            color: colorScheme.primary.withValues(alpha: 0.08),
           ),
-          child: const Icon(Icons.lock_outline, size: 20, color: Color(0xFFD1493F)),
+          child: Icon(Icons.lock_outline, size: 20, color: colorScheme.primary),
         ),
-        title: const Text('Change password', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
-        subtitle: const Text('Update your account password', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF9CA3AF)),
+        title: Text('Change password', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
+        subtitle: Text('Update your account password', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+        trailing: Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.onSurfaceVariant),
         onTap: _showChangePasswordDialog,
       ),
     );
   }
 
   Widget _buildDangerCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFECACA), width: 1.5),
+        border: Border.all(color: colorScheme.error.withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 2)),
         ],
@@ -676,18 +680,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Danger zone', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFFEF4444))),
+          Text('Danger zone', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: colorScheme.error)),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Deleting your account will deactivate it immediately. You will lose access to all your campaigns and volunteer jobs.',
-            style: TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.5),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, height: 1.5),
           ),
           const SizedBox(height: 16),
           OutlinedButton(
             onPressed: _showDeleteDialog,
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFEF4444),
-              side: const BorderSide(color: Color(0xFFEF4444)),
+              foregroundColor: colorScheme.error,
+              side: BorderSide(color: colorScheme.error),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
@@ -699,34 +703,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  BoxDecoration _cardDecoration() => BoxDecoration(
-        color: Colors.white,
+  BoxDecoration _cardDecoration(ColorScheme colorScheme) => BoxDecoration(
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 2)),
         ],
       );
 
-  InputDecoration _fieldDecoration(String hint) => InputDecoration(
+  InputDecoration _fieldDecoration(String hint, ColorScheme colorScheme) => InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+        hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
         filled: true,
-        fillColor: const Color(0xFFF9FAFB),
+        fillColor: colorScheme.surfaceContainerLow,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFD1493F), width: 1.5)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.outline)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.outline)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.primary, width: 1.5)),
       );
 
-  ButtonStyle _outlinedStyle() => OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFF374151),
-        side: const BorderSide(color: Color(0xFFD1D5DB)),
+  ButtonStyle _outlinedStyle(ColorScheme colorScheme) => OutlinedButton.styleFrom(
+        foregroundColor: colorScheme.onSurface,
+        side: BorderSide(color: colorScheme.outlineVariant),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       );
 
-  ButtonStyle _primaryStyle() => ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFD1493F),
+  ButtonStyle _primaryStyle(ColorScheme colorScheme) => ElevatedButton.styleFrom(
+        backgroundColor: colorScheme.primary,
         foregroundColor: Colors.white,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -741,13 +745,14 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF9CA3AF)),
+          Icon(icon, size: 18, color: colorScheme.onSurfaceVariant),
           const SizedBox(width: 10),
-          Text(value, style: const TextStyle(fontSize: 13, color: Color(0xFF374151))),
+          Text(value, style: TextStyle(fontSize: 13, color: colorScheme.onSurface)),
         ],
       ),
     );
@@ -760,7 +765,8 @@ class _VerifiedBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isVerified ? const Color(0xFF10B981) : const Color(0xFF9CA3AF);
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = isVerified ? colorScheme.secondary : colorScheme.onSurfaceVariant;
     final icon = isVerified ? Icons.verified_outlined : Icons.pending_outlined;
     final label = isVerified ? 'Verified' : 'Pending verification';
     return Row(
@@ -793,6 +799,7 @@ class _PasswordField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return TextField(
       controller: controller,
       obscureText: obscure,
@@ -802,12 +809,12 @@ class _PasswordField extends StatelessWidget {
         labelText: label,
         errorText: errorText,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFD1493F), width: 1.5)),
-        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFEF4444))),
-        focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.outline)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.primary, width: 1.5)),
+        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.error)),
+        focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.error, width: 1.5)),
         suffixIcon: IconButton(
-          icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20, color: const Color(0xFF9CA3AF)),
+          icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20, color: colorScheme.onSurfaceVariant),
           onPressed: onToggle,
           splashRadius: 18,
         ),
@@ -825,16 +832,17 @@ class _PasswordChecklist extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _row('At least 8 characters', password.length >= 8),
-        _row('One uppercase letter', RegExp(r'[A-Z]').hasMatch(password)),
-        _row('One lowercase letter', RegExp(r'[a-z]').hasMatch(password)),
-        _row('One number', RegExp(r'[0-9]').hasMatch(password)),
-        _row('One special character (!@#\$%^&*)', RegExp(r'[!@#$%^&*()\-_=+{}|<>?]').hasMatch(password)),
+        _row(context, 'At least 8 characters', password.length >= 8),
+        _row(context, 'One uppercase letter', RegExp(r'[A-Z]').hasMatch(password)),
+        _row(context, 'One lowercase letter', RegExp(r'[a-z]').hasMatch(password)),
+        _row(context, 'One number', RegExp(r'[0-9]').hasMatch(password)),
+        _row(context, 'One special character (!@#\$%^&*)', RegExp(r'[!@#$%^&*()\-_=+{}|<>?]').hasMatch(password)),
       ],
     );
   }
 
-  Widget _row(String label, bool met) {
+  Widget _row(BuildContext context, String label, bool met) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: Row(
@@ -842,12 +850,12 @@ class _PasswordChecklist extends StatelessWidget {
           Icon(
             met ? Icons.check_circle : Icons.radio_button_unchecked,
             size: 14,
-            color: met ? const Color(0xFF22C55E) : const Color(0xFF9CA3AF),
+            color: met ? colorScheme.secondary : colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: 6),
           Text(
             label,
-            style: TextStyle(fontSize: 12, color: met ? const Color(0xFF22C55E) : const Color(0xFF9CA3AF)),
+            style: TextStyle(fontSize: 12, color: met ? colorScheme.secondary : colorScheme.onSurfaceVariant),
           ),
         ],
       ),

@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace HeartForCharity.Services
@@ -144,8 +143,8 @@ namespace HeartForCharity.Services
         public bool VerifyPassword(string password, string storedSalt, string storedHash)
         {
             var saltBytes = Convert.FromBase64String(storedSalt);
-            using var hmac = new HMACSHA256(saltBytes);
-            var computedHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(password)));
+            var computedHash = Convert.ToBase64String(
+                Rfc2898DeriveBytes.Pbkdf2(password, saltBytes, 100_000, HashAlgorithmName.SHA256, 32));
             return computedHash == storedHash;
         }
 
@@ -246,10 +245,9 @@ namespace HeartForCharity.Services
 
         private static (string salt, string hash) HashPassword(string password)
         {
-            using var hmac = new HMACSHA256();
-            var salt = Convert.ToBase64String(hmac.Key);
-            var hash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(password)));
-            return (salt, hash);
+            var saltBytes = RandomNumberGenerator.GetBytes(16);
+            var hashBytes = Rfc2898DeriveBytes.Pbkdf2(password, saltBytes, 100_000, HashAlgorithmName.SHA256, 32);
+            return (Convert.ToBase64String(saltBytes), Convert.ToBase64String(hashBytes));
         }
     }
 }

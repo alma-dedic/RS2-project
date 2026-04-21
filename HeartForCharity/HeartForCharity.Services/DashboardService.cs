@@ -30,20 +30,18 @@ namespace HeartForCharity.Services
 
             var orgId = orgProfile.OrganisationProfileId;
 
-            var campaigns = await _context.Campaigns
-                .Where(c => c.OrganisationProfileId == orgId && c.DeletedAt == null)
-                .ToListAsync();
+            var baseCampaigns = _context.Campaigns
+                .Where(c => c.OrganisationProfileId == orgId && c.DeletedAt == null);
 
-            var campaignIds = campaigns.Select(c => c.CampaignId).ToList();
+            var activeCampaigns = await baseCampaigns
+                .CountAsync(c => c.Status == CampaignStatus.Active);
 
-            var donations = await _context.Donations
-                .Where(d => campaignIds.Contains(d.CampaignId) && d.Status == DonationStatus.Success)
-                .ToListAsync();
+            var finishedCampaigns = await baseCampaigns
+                .CountAsync(c => c.Status == CampaignStatus.Completed);
 
-            var jobIds = await _context.VolunteerJobs
+            var jobIds = _context.VolunteerJobs
                 .Where(j => j.OrganisationProfileId == orgId && j.DeletedAt == null)
-                .Select(j => j.VolunteerJobId)
-                .ToListAsync();
+                .Select(j => j.VolunteerJobId);
 
             var totalVolunteers = await _context.VolunteerApplications
                 .Where(a => jobIds.Contains(a.VolunteerJobId) && a.Status == ApplicationStatus.Approved)
@@ -51,10 +49,17 @@ namespace HeartForCharity.Services
                 .Distinct()
                 .CountAsync();
 
-            var sixMonthsAgo = DateTime.UtcNow.AddMonths(-5).Date;
-            sixMonthsAgo = new DateTime(sixMonthsAgo.Year, sixMonthsAgo.Month, 1);
+            var campaignIds = baseCampaigns.Select(c => c.CampaignId);
 
-            var monthlyDonations = donations
+            var successfulDonations = _context.Donations
+                .Where(d => campaignIds.Contains(d.CampaignId) && d.Status == DonationStatus.Success);
+
+            var totalRaised = await successfulDonations.SumAsync(d => (decimal?)d.Amount) ?? 0m;
+
+            var sixMonthsAgo = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc)
+                .AddMonths(-5);
+
+            var monthlyDonations = await successfulDonations
                 .Where(d => d.DonationDateTime >= sixMonthsAgo)
                 .GroupBy(d => new { d.DonationDateTime.Year, d.DonationDateTime.Month })
                 .Select(g => new MonthlyDonationItem
@@ -65,10 +70,9 @@ namespace HeartForCharity.Services
                     Count = g.Count()
                 })
                 .OrderBy(m => m.Year).ThenBy(m => m.Month)
-                .ToList();
+                .ToListAsync();
 
             var recentReviews = await _context.Reviews
-                .Include(r => r.UserProfile)
                 .Where(r => r.OrganisationProfileId == orgId && r.DeletedAt == null)
                 .OrderByDescending(r => r.CreatedAt)
                 .Take(4)
@@ -84,7 +88,7 @@ namespace HeartForCharity.Services
                 })
                 .ToListAsync();
 
-            var campaignProgress = campaigns
+            var campaignProgress = await baseCampaigns
                 .Where(c => c.Status == CampaignStatus.Active)
                 .OrderByDescending(c => c.CurrentAmount)
                 .Take(5)
@@ -95,14 +99,14 @@ namespace HeartForCharity.Services
                     TargetAmount = c.TargetAmount,
                     CurrentAmount = c.CurrentAmount
                 })
-                .ToList();
+                .ToListAsync();
 
             return new DashboardResponse
             {
-                ActiveCampaigns = campaigns.Count(c => c.Status == CampaignStatus.Active),
-                FinishedCampaigns = campaigns.Count(c => c.Status == CampaignStatus.Completed),
+                ActiveCampaigns = activeCampaigns,
+                FinishedCampaigns = finishedCampaigns,
                 TotalVolunteers = totalVolunteers,
-                TotalRaised = donations.Sum(d => d.Amount),
+                TotalRaised = totalRaised,
                 MonthlyDonations = monthlyDonations,
                 RecentReviews = recentReviews,
                 CampaignProgress = campaignProgress

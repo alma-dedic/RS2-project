@@ -35,14 +35,14 @@ namespace HeartForCharity.Services
 
             if (!search.RetrieveAll)
             {
+                const int MaxPageSize = 100;
+                if (search.PageSize.HasValue && search.PageSize.Value > MaxPageSize)
+                    search.PageSize = MaxPageSize;
+
                 if (search.Page.HasValue)
-                {
-                    query = query.Skip(search.Page.Value * search.PageSize.Value);
-                }
+                    query = query.Skip(search.Page.Value * search.PageSize!.Value);
                 if (search.PageSize.HasValue)
-                {
                     query = query.Take(search.PageSize.Value);
-                }
             }
 
 

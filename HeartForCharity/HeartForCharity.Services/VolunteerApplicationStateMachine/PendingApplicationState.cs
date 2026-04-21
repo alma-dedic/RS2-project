@@ -41,8 +41,10 @@ namespace HeartForCharity.Services.VolunteerApplicationStateMachine
             if (orgProfile == null || application.VolunteerJob.OrganisationProfileId != orgProfile.OrganisationProfileId)
                 throw new ForbiddenException("You can only approve applications for your own volunteer jobs.");
 
-            application.Status    = ApplicationStatus.Approved;
-            application.UpdatedAt = DateTime.UtcNow;
+            application.Status           = ApplicationStatus.Approved;
+            application.ReviewedByUserId = _currentUserService.UserId;
+            application.ReviewedAt       = DateTime.UtcNow;
+            application.UpdatedAt        = DateTime.UtcNow;
 
             application.VolunteerJob.PositionsFilled++;
             application.VolunteerJob.UpdatedAt = DateTime.UtcNow;
@@ -78,9 +80,11 @@ namespace HeartForCharity.Services.VolunteerApplicationStateMachine
             if (orgProfile == null || application.VolunteerJob.OrganisationProfileId != orgProfile.OrganisationProfileId)
                 throw new ForbiddenException("You can only reject applications for your own volunteer jobs.");
 
-            application.Status          = ApplicationStatus.Rejected;
-            application.RejectionReason = request.RejectionReason;
-            application.UpdatedAt       = DateTime.UtcNow;
+            application.Status           = ApplicationStatus.Rejected;
+            application.RejectionReason  = request.RejectionReason;
+            application.ReviewedByUserId = _currentUserService.UserId;
+            application.ReviewedAt       = DateTime.UtcNow;
+            application.UpdatedAt        = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
