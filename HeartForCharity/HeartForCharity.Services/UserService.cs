@@ -129,6 +129,51 @@ namespace HeartForCharity.Services
             return MapToResponse(user);
         }
 
+        public async Task<UserResponse> RegisterUserAsync(RegisterUserRequest request)
+        {
+            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+                throw new Exception("Username is already taken.");
+
+            if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+                throw new Exception("Email is already in use.");
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            var (salt, hash) = HashPassword(request.Password);
+
+            var user = new Database.User
+            {
+                Username = request.Username,
+                Email = request.Email,
+                UserType = UserType.User,
+                PasswordSalt = salt,
+                PasswordHash = hash,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            var profile = new Database.UserProfile
+            {
+                UserId = user.UserId,
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                PhoneNumber = request.PhoneNumber,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.UserProfiles.Add(profile);
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return MapToResponse(user);
+        }
+
         public async Task<UserResponse?> AuthenticateAsync(UserLoginRequest request)
         {
             var user = await _context.Users

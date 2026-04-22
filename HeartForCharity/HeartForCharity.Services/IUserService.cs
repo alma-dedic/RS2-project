@@ -9,6 +9,7 @@ namespace HeartForCharity.Services
     {
         Task<UserResponse?> AuthenticateAsync(UserLoginRequest request);
         Task<UserResponse> RegisterOrganisationAsync(RegisterOrganisationRequest request);
+        Task<UserResponse> RegisterUserAsync(RegisterUserRequest request);
         bool VerifyPassword(string password, string storedSalt, string storedHash);
         Task<string> GenerateRefreshTokenAsync(int userId);
         Task<(bool isValid, int userId)> ValidateRefreshTokenAsync(string token);
