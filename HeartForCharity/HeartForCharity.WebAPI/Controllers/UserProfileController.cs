@@ -11,7 +11,21 @@ namespace HeartForCharity.WebAPI.Controllers
     [Route("api/[controller]")]
     public class UserProfileController : BaseCRUDController<UserProfileResponse, UserProfileSearchObject, UserProfileInsertRequest, UserProfileUpdateRequest>
     {
-        public UserProfileController(IUserProfileService service) : base(service) { }
+        private readonly IUserProfileService _userProfileService;
+
+        public UserProfileController(IUserProfileService service) : base(service)
+        {
+            _userProfileService = service;
+        }
+
+        [Authorize(Roles = "User")]
+        [HttpGet("me")]
+        public async Task<ActionResult<UserProfileResponse?>> GetMe()
+        {
+            var profile = await _userProfileService.GetMeAsync();
+            if (profile == null) return NotFound();
+            return Ok(profile);
+        }
 
         [Authorize(Roles = "User")]
         [HttpPost]

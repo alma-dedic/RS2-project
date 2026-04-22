@@ -9,5 +9,8 @@ using System.Threading.Tasks;
 
 namespace HeartForCharity.Services
 {
-    public interface IUserProfileService : ICRUDService<UserProfileResponse, UserProfileSearchObject, UserProfileInsertRequest, UserProfileUpdateRequest> { }
+    public interface IUserProfileService : ICRUDService<UserProfileResponse, UserProfileSearchObject, UserProfileInsertRequest, UserProfileUpdateRequest>
+    {
+        Task<UserProfileResponse?> GetMeAsync();
+    }
 }

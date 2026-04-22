@@ -35,6 +35,25 @@ namespace HeartForCharity.WebAPI.Controllers
         }
 
         [AllowAnonymous]
+        [HttpPost("register-user")]
+        public async Task<ActionResult<UserResponse>> RegisterUser([FromBody] RegisterUserRequest request)
+        {
+            try
+            {
+                var user = await _userService.RegisterUserAsync(request);
+                return Ok(user);
+            }
+            catch (Exception ex) when (ex.Message.Contains("already"))
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch
+            {
+                return BadRequest(new { message = "Registration failed. Please try again." });
+            }
+        }
+
+        [AllowAnonymous]
         [HttpPost("register-organisation")]
         public async Task<ActionResult<UserResponse>> RegisterOrganisation([FromBody] RegisterOrganisationRequest request)
         {

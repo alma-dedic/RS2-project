@@ -51,6 +51,14 @@ namespace HeartForCharity.Services
             };
         }
 
+        public async Task<UserProfileResponse?> GetMeAsync()
+        {
+            var entity = await _context.UserProfiles
+                .Include(u => u.Address).ThenInclude(a => a!.City).ThenInclude(c => c.Country)
+                .FirstOrDefaultAsync(u => u.UserId == _currentUserService.UserId);
+            return entity == null ? null : MapToResponse(entity);
+        }
+
         protected override Task BeforeInsert(UserProfile entity, UserProfileInsertRequest request)
         {
             entity.UserId = _currentUserService.UserId;
