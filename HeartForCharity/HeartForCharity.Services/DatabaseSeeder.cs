@@ -315,6 +315,53 @@ namespace HeartForCharity.Services
                 new Review { VolunteerApplicationId = appCC3.VolunteerApplicationId, OrganisationProfileId = careOrg.OrganisationProfileId, UserProfileId = emilyProfile.UserProfileId, Rating = 4, Comment = "Solid volunteer programme. Tasks were clearly explained and I always felt useful. The team spirit was great and I made some wonderful connections.",        CreatedAt = now.AddMonths(-2), UpdatedAt = now.AddMonths(-2) }
             );
             await context.SaveChangesAsync();
+
+            // ── 16. NOTIFICATIONS (lisa_taylor) ───────────────────────────────────
+            await context.Notifications.AddRangeAsync(
+                new Notification
+                {
+                    UserProfileId          = lisaProfile.UserProfileId,
+                    VolunteerApplicationId = appCC1.VolunteerApplicationId,
+                    Title                  = "Application Approved",
+                    Message                = "Your application for 'Winter Clothing Drive' has been approved. Thank you for volunteering!",
+                    Type                   = NotificationType.ApplicationApproved,
+                    IsRead                 = false,
+                    SentDateTime           = now.AddMonths(-2).AddDays(1),
+                    CreatedAt              = now.AddMonths(-2).AddDays(1)
+                },
+                new Notification
+                {
+                    UserProfileId          = lisaProfile.UserProfileId,
+                    VolunteerApplicationId = app10.VolunteerApplicationId,
+                    Title                  = "Application Rejected",
+                    Message                = "Unfortunately your application for 'Health Screening Assistant' was not accepted at this time. Please check other available opportunities.",
+                    Type                   = NotificationType.ApplicationRejected,
+                    IsRead                 = false,
+                    SentDateTime           = now.AddDays(-5),
+                    CreatedAt              = now.AddDays(-5)
+                },
+                new Notification
+                {
+                    UserProfileId = lisaProfile.UserProfileId,
+                    Title         = "Welcome to HeartForCharity",
+                    Message       = "Thank you for joining HeartForCharity! Explore volunteer opportunities and campaigns near you.",
+                    Type          = NotificationType.General,
+                    IsRead        = true,
+                    SentDateTime  = now.AddMonths(-3),
+                    CreatedAt     = now.AddMonths(-3)
+                },
+                new Notification
+                {
+                    UserProfileId = lisaProfile.UserProfileId,
+                    Title         = "New Opportunities Available",
+                    Message       = "Several new volunteer opportunities have been posted in your area. Check them out on the Explore tab!",
+                    Type          = NotificationType.General,
+                    IsRead        = false,
+                    SentDateTime  = now.AddDays(-1),
+                    CreatedAt     = now.AddDays(-1)
+                }
+            );
+            await context.SaveChangesAsync();
         }
 
         private static User CreateUser(string username, string email, string password, UserType userType)

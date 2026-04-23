@@ -23,5 +23,11 @@ namespace HeartForCharity.WebAPI.Controllers
         {
             return await _notificationService.MarkAsReadAsync(id);
         }
+
+        [HttpPatch("read-all")]
+        public async Task<bool> MarkAllAsRead()
+        {
+            return await _notificationService.MarkAllAsReadAsync();
+        }
     }
 }

@@ -11,5 +11,6 @@ namespace HeartForCharity.Services
     public interface INotificationService : IService<NotificationResponse, NotificationSearchObject>
     {
         Task<bool> MarkAsReadAsync(int notificationId);
+        Task<bool> MarkAllAsReadAsync();
     }
 }

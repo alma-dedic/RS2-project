@@ -70,5 +70,24 @@ namespace HeartForCharity.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<bool> MarkAllAsReadAsync()
+        {
+            var userProfile = await _context.UserProfiles
+                .FirstOrDefaultAsync(up => up.UserId == _currentUserService.UserId);
+
+            if (userProfile == null)
+                throw new UserException("User profile not found.");
+
+            var unread = await _context.Notifications
+                .Where(n => n.UserProfileId == userProfile.UserProfileId && !n.IsRead)
+                .ToListAsync();
+
+            foreach (var n in unread)
+                n.IsRead = true;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

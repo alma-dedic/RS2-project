@@ -9,6 +9,7 @@ import 'package:heartforcharity_mobile/providers/donation_provider.dart';
 import 'package:heartforcharity_mobile/providers/review_provider.dart';
 import 'package:heartforcharity_mobile/providers/upload_provider.dart';
 import 'package:heartforcharity_mobile/providers/user_profile_provider.dart';
+import 'package:heartforcharity_mobile/providers/notification_provider.dart';
 import 'package:heartforcharity_mobile/providers/volunteer_application_provider.dart';
 import 'package:heartforcharity_mobile/screens/login_screen.dart';
 import 'package:heartforcharity_mobile/screens/main_shell.dart';
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ReviewProvider()),
         ChangeNotifierProvider(create: (_) => UploadProvider()),
         ChangeNotifierProvider(create: (_) => AccountProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: MaterialApp(
         title: 'HeartForCharity',
