@@ -58,7 +58,8 @@ namespace HeartForCharity.Services
                              .ThenInclude(up => up!.Address)
                                  .ThenInclude(a => a!.City)
                          .Include(va => va.ReviewedByUser)
-                             .ThenInclude(u => u!.OrganisationProfile);
+                             .ThenInclude(u => u!.OrganisationProfile)
+                         .Include(va => va.Review);
 
             if (search.VolunteerJobId.HasValue)
                 query = query.Where(va => va.VolunteerJobId == search.VolunteerJobId);
@@ -103,6 +104,7 @@ namespace HeartForCharity.Services
                 Status          = entity.Status.ToString(),
                 RejectionReason = entity.RejectionReason,
                 IsCompleted      = entity.IsCompleted,
+                HasReview        = entity.Review != null,
                 ReviewedByName   = entity.ReviewedByUser?.OrganisationProfile?.Name
                                 ?? entity.ReviewedByUser?.Username,
                 ReviewedAt       = entity.ReviewedAt,

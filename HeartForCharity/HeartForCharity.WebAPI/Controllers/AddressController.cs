@@ -23,5 +23,15 @@ namespace HeartForCharity.WebAPI.Controllers
         [HttpGet("{id}")]
         public override async Task<AddressResponse?> GetById(int id)
             => await base.GetById(id);
+
+        [Authorize]
+        [HttpPost("")]
+        public override async Task<AddressResponse> Create([FromBody] AddressUpsertRequest request)
+            => await base.Create(request);
+
+        [Authorize]
+        [HttpPut("{id}")]
+        public override async Task<AddressResponse?> Update(int id, [FromBody] AddressUpsertRequest request)
+            => await base.Update(id, request);
     }
 }
