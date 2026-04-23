@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:heartforcharity_mobile/providers/account_provider.dart';
+import 'package:heartforcharity_mobile/providers/address_provider.dart';
 import 'package:heartforcharity_mobile/providers/auth_provider.dart';
+import 'package:heartforcharity_mobile/providers/city_provider.dart';
+import 'package:heartforcharity_mobile/providers/country_provider.dart';
+import 'package:heartforcharity_mobile/providers/donation_provider.dart';
+import 'package:heartforcharity_mobile/providers/review_provider.dart';
+import 'package:heartforcharity_mobile/providers/upload_provider.dart';
+import 'package:heartforcharity_mobile/providers/user_profile_provider.dart';
+import 'package:heartforcharity_mobile/providers/volunteer_application_provider.dart';
 import 'package:heartforcharity_mobile/screens/login_screen.dart';
 import 'package:heartforcharity_mobile/screens/main_shell.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +28,15 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => UserProfileProvider()),
+        ChangeNotifierProvider(create: (_) => AddressProvider()),
+        ChangeNotifierProvider(create: (_) => CountryProvider()),
+        ChangeNotifierProvider(create: (_) => CityProvider()),
+        ChangeNotifierProvider(create: (_) => VolunteerApplicationProvider()),
+        ChangeNotifierProvider(create: (_) => DonationProvider()),
+        ChangeNotifierProvider(create: (_) => ReviewProvider()),
+        ChangeNotifierProvider(create: (_) => UploadProvider()),
+        ChangeNotifierProvider(create: (_) => AccountProvider()),
       ],
       child: MaterialApp(
         title: 'HeartForCharity',

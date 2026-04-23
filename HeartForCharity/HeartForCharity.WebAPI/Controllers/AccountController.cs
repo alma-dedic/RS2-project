@@ -24,7 +24,6 @@ namespace HeartForCharity.WebAPI.Controllers
             return Ok();
         }
 
-        [Authorize(Roles = "Organisation")]
         [HttpDelete("me")]
         public async Task<IActionResult> DeleteAccount()
         {

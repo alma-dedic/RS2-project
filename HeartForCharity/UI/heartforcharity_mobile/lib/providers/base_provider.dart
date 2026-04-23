@@ -10,7 +10,7 @@ import 'package:heartforcharity_mobile/screens/login_screen.dart';
 abstract class BaseProvider<T> with ChangeNotifier {
   static String baseUrl = const String.fromEnvironment(
     'baseUrl',
-    defaultValue: 'http://10.102.222.159:5145/api/',
+    defaultValue: 'http://192.168.111.238:5145/api/',
   );
 
   String _endpoint = '';
