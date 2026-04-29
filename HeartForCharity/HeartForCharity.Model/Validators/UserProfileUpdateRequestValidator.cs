@@ -10,15 +10,18 @@ namespace HeartForCharity.Model.Validators
         {
             RuleFor(x => x.FirstName)
                 .NotEmpty().WithMessage("First name is required.")
+                .MinimumLength(2).WithMessage("First name must be at least 2 characters.")
                 .MaximumLength(100).WithMessage("First name must not exceed 100 characters.");
 
             RuleFor(x => x.LastName)
                 .NotEmpty().WithMessage("Last name is required.")
+                .MinimumLength(2).WithMessage("Last name must be at least 2 characters.")
                 .MaximumLength(100).WithMessage("Last name must not exceed 100 characters.");
 
             RuleFor(x => x.PhoneNumber)
-                .MaximumLength(20).WithMessage("Phone number must not exceed 20 characters.")
-                .When(x => x.PhoneNumber != null);
+                .Matches(@"^[+\d\s\-()]{6,20}$")
+                .WithMessage("Enter a valid phone number (6-20 characters, e.g. +387 61 123 456).")
+                .When(x => !string.IsNullOrWhiteSpace(x.PhoneNumber));
 
             RuleFor(x => x.DateOfBirth)
                 .LessThan(DateTime.UtcNow).WithMessage("Date of birth must be in the past.")

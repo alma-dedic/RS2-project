@@ -13,7 +13,7 @@ namespace HeartForCharity.Model.SearchObjects
         public DateTime? DateFrom { get; set; }
         public DateTime? DateTo { get; set; }
         public string? Status { get; set; }
-        public string? OrderBy { get; set; } // "date" or "amount"
+        public string? OrderBy { get; set; } 
         public bool OrderDescending { get; set; } = true;
     }
 }

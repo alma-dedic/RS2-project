@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:heartforcharity_mobile/model/responses/city.dart';
-import 'package:heartforcharity_mobile/model/responses/country.dart';
+import 'package:heartforcharity_shared/model/responses/city.dart';
+import 'package:heartforcharity_mobile/model/responses/skill.dart';
+import 'package:heartforcharity_mobile/model/responses/volunteer_skill.dart';
+import 'package:heartforcharity_mobile/utils/auth_image.dart';
+import 'package:heartforcharity_shared/model/responses/country.dart';
 import 'package:heartforcharity_mobile/providers/account_provider.dart';
-import 'package:heartforcharity_mobile/providers/address_provider.dart';
+import 'package:heartforcharity_shared/providers/address_provider.dart';
 import 'package:heartforcharity_mobile/providers/auth_provider.dart';
-import 'package:heartforcharity_mobile/providers/city_provider.dart';
-import 'package:heartforcharity_mobile/providers/country_provider.dart';
+import 'package:heartforcharity_shared/providers/city_provider.dart';
+import 'package:heartforcharity_shared/providers/country_provider.dart';
 import 'package:heartforcharity_mobile/providers/upload_provider.dart';
 import 'package:heartforcharity_mobile/providers/user_profile_provider.dart';
+import 'package:heartforcharity_mobile/providers/volunteer_skill_provider.dart';
 import 'package:heartforcharity_mobile/screens/login_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -17,14 +21,17 @@ class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() => ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class ProfileScreenState extends State<ProfileScreen> {
   bool _loading = true;
   bool _editing = false;
   bool _saving = false;
   String? _error;
+  String? _firstNameError;
+  String? _lastNameError;
+  String? _phoneError;
 
   int? _profileId;
   int? _addressId;
@@ -42,6 +49,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<City> _cities = [];
   int? _selectedCountryId;
   int? _selectedCityId;
+
+  List<VolunteerSkill> _mySkills = [];
+  bool _loadingSkills = false;
 
   @override
   void initState() {
@@ -63,12 +73,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadAll() async {
     setState(() { _loading = true; _error = null; });
     try {
-      await Future.wait([_loadProfile(), _loadCountries()]);
+      await Future.wait([_loadProfile(), _loadCountries(), _loadMySkills()]);
     } catch (e) {
       setState(() => _error = 'Failed to load profile.');
     } finally {
       setState(() => _loading = false);
     }
+  }
+
+  Future<void> _loadMySkills() async {
+    setState(() => _loadingSkills = true);
+    try {
+      final skills = await context.read<VolunteerSkillProvider>().getMySkills();
+      if (mounted) setState(() => _mySkills = skills);
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loadingSkills = false);
+    }
+  }
+
+  void refreshSkills() => _loadMySkills();
+
+  Future<void> _removeSkill(int volunteerSkillId) async {
+    try {
+      await context.read<VolunteerSkillProvider>().removeSkill(volunteerSkillId);
+      if (mounted) {
+        setState(() => _mySkills.removeWhere((s) => s.volunteerSkillId == volunteerSkillId));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Skill removed successfully.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        );
+      }
+    }
+  }
+
+  Future<void> _showAddSkillSheet() async {
+    final provider = context.read<VolunteerSkillProvider>();
+    List<Skill> allSkills = [];
+    try {
+      final result = await provider.getAllSkills();
+      allSkills = result.items;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
+
+    final alreadyAdded = _mySkills.map((s) => s.skillId).toSet();
+    final available = allSkills.where((s) => !alreadyAdded.contains(s.skillId)).toList();
+    if (available.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You have already added all available skills.')),
+      );
+      return;
+    }
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _AddSkillSheet(skills: available, provider: provider, onAdded: (vs) {
+        if (mounted) setState(() => _mySkills.add(vs));
+      }),
+    );
   }
 
   Future<void> _loadProfile() async {
@@ -131,10 +207,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _save() async {
-    if (_profileId == null && _firstNameCtrl.text.trim().isEmpty) {
-      setState(() => _error = 'First name is required.');
-      return;
-    }
+    final firstNameErr = _firstNameCtrl.text.trim().isEmpty
+        ? 'First name is required.'
+        : _firstNameCtrl.text.trim().length > 100 ? 'Max 100 characters.' : null;
+    final lastNameErr = _lastNameCtrl.text.trim().isEmpty
+        ? 'Last name is required.'
+        : _lastNameCtrl.text.trim().length > 100 ? 'Max 100 characters.' : null;
+    final phone = _phoneCtrl.text.trim();
+    final phoneErr = phone.isNotEmpty && !RegExp(r'^[+\d\s\-()]{6,20}$').hasMatch(phone)
+        ? 'Enter a valid phone number (e.g. +387 61 123 456).'
+        : null;
+    setState(() {
+      _firstNameError = firstNameErr;
+      _lastNameError = lastNameErr;
+      _phoneError = phoneErr;
+    });
+    if (firstNameErr != null || lastNameErr != null || phoneErr != null) return;
     setState(() { _saving = true; _error = null; });
 
     final addressProvider = context.read<AddressProvider>();
@@ -161,7 +249,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'firstName': _firstNameCtrl.text.trim(),
         'lastName': _lastNameCtrl.text.trim(),
         'phoneNumber': _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
-        'dateOfBirth': _dateOfBirth?.toIso8601String(),
+        'dateOfBirth': _dateOfBirth?.toUtc().toIso8601String(),
         'profilePictureUrl': _profilePictureUrl,
         'addressId': addressId,
       };
@@ -256,8 +344,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerHighest,
       appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
         title: Text(
           _editing ? 'Edit Profile' : 'Profile',
           style: const TextStyle(fontWeight: FontWeight.w700),
@@ -266,17 +352,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (!_loading && !_editing)
             TextButton(
               onPressed: () => setState(() => _editing = true),
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
               child: const Text('Edit'),
             ),
           if (_editing) ...[
             TextButton(
-              onPressed: _saving ? null : () => setState(() { _editing = false; _loadAll(); }),
+              onPressed: _saving ? null : () => setState(() {
+                _editing = false;
+                _firstNameError = null;
+                _lastNameError = null;
+                _phoneError = null;
+                _loadAll();
+              }),
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: _saving ? null : _save,
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
               child: _saving
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Text('Save'),
             ),
           ],
@@ -314,10 +409,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                       _buildSection('Personal Information', colorScheme, [
-                        _buildField('First Name', _firstNameCtrl, colorScheme, editable: _editing),
-                        _buildField('Last Name', _lastNameCtrl, colorScheme, editable: _editing),
+                        _buildField('First Name', _firstNameCtrl, colorScheme,
+                            editable: _editing,
+                            errorText: _editing ? _firstNameError : null,
+                            onChanged: () => setState(() => _firstNameError = null)),
+                        _buildField('Last Name', _lastNameCtrl, colorScheme,
+                            editable: _editing,
+                            errorText: _editing ? _lastNameError : null,
+                            onChanged: () => setState(() => _lastNameError = null)),
                         _buildField('Phone Number', _phoneCtrl, colorScheme,
-                            editable: _editing, keyboardType: TextInputType.phone),
+                            editable: _editing,
+                            keyboardType: TextInputType.phone,
+                            errorText: _editing ? _phoneError : null,
+                            onChanged: () => setState(() => _phoneError = null)),
                         _buildDobField(colorScheme),
                       ]),
                       const SizedBox(height: 16),
@@ -330,6 +434,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _buildField('Postal Code', _postalCtrl, colorScheme, editable: _editing),
                         ],
                       ]),
+                      const SizedBox(height: 16),
+                      _buildSkillsSection(colorScheme),
                       const SizedBox(height: 24),
                       _buildActionButton('Change Password', Icons.lock_outline, colorScheme.primary, _changePassword),
                       const SizedBox(height: 10),
@@ -353,7 +459,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         CircleAvatar(
           radius: 52,
           backgroundColor: colorScheme.primary.withValues(alpha: 0.15),
-          backgroundImage: _profilePictureUrl != null ? NetworkImage(_profilePictureUrl!) : null,
+          backgroundImage: _profilePictureUrl != null ? authNetworkImage(_profilePictureUrl!) : null,
           child: _profilePictureUrl == null
               ? Text(
                   initials.isEmpty ? '?' : initials,
@@ -400,7 +506,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildField(String label, TextEditingController ctrl, ColorScheme colorScheme,
-      {bool editable = false, TextInputType? keyboardType}) {
+      {bool editable = false, TextInputType? keyboardType, String? errorText, VoidCallback? onChanged}) {
     if (!editable) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
@@ -426,9 +532,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: TextFormField(
         controller: ctrl,
         keyboardType: keyboardType,
+        onChanged: onChanged != null ? (_) => onChanged() : null,
         style: const TextStyle(fontSize: 14),
         decoration: InputDecoration(
           labelText: label,
+          errorText: errorText,
           isDense: true,
           filled: true,
           fillColor: colorScheme.surfaceContainerHighest,
@@ -443,6 +551,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: colorScheme.error),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: colorScheme.error, width: 1.5),
           ),
         ),
       ),
@@ -603,6 +719,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildSkillsSection(ColorScheme cs) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('My Skills', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: cs.primary)),
+              const Spacer(),
+              if (!_editing)
+                GestureDetector(
+                  onTap: _showAddSkillSheet,
+                  child: Icon(Icons.add_circle_outline, size: 20, color: cs.primary),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Divider(color: cs.outline.withValues(alpha: 0.3), height: 1),
+          const SizedBox(height: 12),
+          if (_loadingSkills)
+            const Center(child: CircularProgressIndicator())
+          else if (_mySkills.isEmpty)
+            Text('No skills added yet.', style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant))
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: _mySkills.map((vs) => Chip(
+                label: Text(vs.skillName, style: TextStyle(fontSize: 12, color: cs.primary)),
+                backgroundColor: cs.primary.withValues(alpha: 0.08),
+                side: BorderSide(color: cs.primary.withValues(alpha: 0.25)),
+                deleteIcon: Icon(Icons.close, size: 14, color: cs.onSurfaceVariant),
+                onDeleted: _editing ? null : () => _removeSkill(vs.volunteerSkillId),
+                padding: EdgeInsets.zero,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              )).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActionButton(String label, IconData icon, Color color, VoidCallback onTap) {
     return SizedBox(
       width: double.infinity,
@@ -635,9 +799,10 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
   bool _obscureNew = true;
   bool _obscureConfirm = true;
   bool _saving = false;
-  String? _error;
+  String? _currentError;
+  String? _newError;
+  String? _confirmError;
   String _newPassword = '';
-  final _scrollCtrl = ScrollController();
 
   bool get _hasLength => _newPassword.length >= 8;
   bool get _hasUpper => RegExp(r'[A-Z]').hasMatch(_newPassword);
@@ -657,44 +822,46 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
     _currentCtrl.dispose();
     _newCtrl.dispose();
     _confirmCtrl.dispose();
-    _scrollCtrl.dispose();
     super.dispose();
   }
 
-  void _setError(String msg) {
-    setState(() => _error = msg);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollCtrl.hasClients) {
-        _scrollCtrl.animateTo(
-          _scrollCtrl.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
   Future<void> _submit() async {
-    if (_newCtrl.text == _currentCtrl.text) {
-      _setError('New password must be different from current password.');
-      return;
-    }
-    if (!_passwordValid) {
-      _setError('New password does not meet the requirements.');
-      return;
-    }
-    if (_newCtrl.text != _confirmCtrl.text) {
-      _setError('Passwords do not match.');
-      return;
-    }
-    setState(() { _saving = true; _error = null; });
+    final currentErr = _currentCtrl.text.isEmpty ? 'Current password is required.' : null;
+    final newErr = _newCtrl.text.isEmpty
+        ? 'New password is required.'
+        : !_passwordValid
+            ? 'New password does not meet the requirements.'
+            : (_currentCtrl.text.isNotEmpty && _newCtrl.text == _currentCtrl.text)
+                ? 'New password must differ from current.'
+                : null;
+    final confirmErr = _confirmCtrl.text.isEmpty
+        ? 'Please confirm your new password.'
+        : _confirmCtrl.text != _newCtrl.text
+            ? 'Passwords do not match.'
+            : null;
+    setState(() {
+      _currentError = currentErr;
+      _newError = newErr;
+      _confirmError = confirmErr;
+    });
+    if (currentErr != null || newErr != null || confirmErr != null) return;
+
+    setState(() { _saving = true; });
     final accountProvider = context.read<AccountProvider>();
     try {
       await accountProvider.changePassword(_currentCtrl.text, _newCtrl.text);
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
-      if (mounted) _setError(e.toString().replaceFirst('Exception: ', ''));
+      if (!mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      setState(() {
+        if (msg.toLowerCase().contains('incorrect') || msg.toLowerCase().contains('current')) {
+          _currentError = msg;
+        } else {
+          _newError = msg;
+        }
+      });
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -706,15 +873,18 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
     return AlertDialog(
       title: const Text('Change Password'),
       content: SingleChildScrollView(
-        controller: _scrollCtrl,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _field('Current password', _currentCtrl, _obscureCurrent,
-                () => setState(() => _obscureCurrent = !_obscureCurrent)),
+                () => setState(() => _obscureCurrent = !_obscureCurrent),
+                errorText: _currentError,
+                onChanged: (_) => setState(() => _currentError = null)),
             const SizedBox(height: 12),
             _field('New password', _newCtrl, _obscureNew,
-                () => setState(() => _obscureNew = !_obscureNew)),
+                () => setState(() => _obscureNew = !_obscureNew),
+                errorText: _newError,
+                onChanged: (_) => setState(() => _newError = null)),
             if (_newPassword.isNotEmpty) ...[
               const SizedBox(height: 8),
               _checkRow('At least 8 characters', _hasLength, colorScheme),
@@ -725,18 +895,9 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
             ],
             const SizedBox(height: 12),
             _field('Confirm new password', _confirmCtrl, _obscureConfirm,
-                () => setState(() => _obscureConfirm = !_obscureConfirm)),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: colorScheme.error.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(_error!, style: TextStyle(color: colorScheme.error, fontSize: 13)),
-              ),
-            ],
+                () => setState(() => _obscureConfirm = !_obscureConfirm),
+                errorText: _confirmError,
+                onChanged: (_) => setState(() => _confirmError = null)),
           ],
         ),
       ),
@@ -772,17 +933,110 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
     );
   }
 
-  Widget _field(String label, TextEditingController ctrl, bool obscure, VoidCallback toggle) {
+  Widget _field(String label, TextEditingController ctrl, bool obscure, VoidCallback toggle,
+      {String? errorText, ValueChanged<String>? onChanged}) {
     return TextField(
       controller: ctrl,
       obscureText: obscure,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
+        errorText: errorText,
         border: const OutlineInputBorder(),
         isDense: true,
         suffixIcon: IconButton(
           icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
           onPressed: toggle,
+        ),
+      ),
+    );
+  }
+}
+
+class _AddSkillSheet extends StatefulWidget {
+  final List<Skill> skills;
+  final VolunteerSkillProvider provider;
+  final void Function(VolunteerSkill) onAdded;
+
+  const _AddSkillSheet({required this.skills, required this.provider, required this.onAdded});
+
+  @override
+  State<_AddSkillSheet> createState() => _AddSkillSheetState();
+}
+
+class _AddSkillSheetState extends State<_AddSkillSheet> {
+  bool _saving = false;
+
+  Future<void> _add(int skillId) async {
+    setState(() => _saving = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final vs = await widget.provider.addSkill(skillId);
+      if (mounted) {
+        widget.onAdded(vs);
+        Navigator.pop(context);
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Skill added successfully.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        );
+        setState(() => _saving = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36, height: 4,
+                  decoration: BoxDecoration(color: cs.outline, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('Add a skill', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: cs.onSurface)),
+              const SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: widget.skills.length,
+                  separatorBuilder: (_, _) => Divider(height: 1, color: cs.outline.withValues(alpha: 0.3)),
+                  itemBuilder: (_, i) {
+                    final skill = widget.skills[i];
+                    return ListTile(
+                      title: Text(skill.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                      subtitle: skill.description != null
+                          ? Text(skill.description!, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant))
+                          : null,
+                      trailing: _saving ? null : Icon(Icons.add, color: cs.primary),
+                      onTap: _saving ? null : () => _add(skill.skillId),
+                      contentPadding: EdgeInsets.zero,
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );

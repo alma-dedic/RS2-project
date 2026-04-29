@@ -15,7 +15,7 @@ namespace HeartForCharity.Services.Database
         public int CampaignId { get; set; }
 
         [ForeignKey(nameof(UserProfile))]
-        public int? UserProfileId { get; set; }  // null = anonimna donacija
+        public int? UserProfileId { get; set; }  
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]

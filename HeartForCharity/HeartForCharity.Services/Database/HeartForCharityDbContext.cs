@@ -27,6 +27,7 @@ namespace HeartForCharity.Services.Database
         public DbSet<VolunteerJob> VolunteerJobs { get; set; }
         public DbSet<VolunteerApplication> VolunteerApplications { get; set; }
         public DbSet<VolunteerSkill> VolunteerSkills { get; set; }
+        public DbSet<VolunteerJobSkill> VolunteerJobSkills { get; set; }
         public DbSet<Skill> Skills { get; set; }
 
         // Recenzije, notifikacije, preporuke
@@ -64,6 +65,11 @@ namespace HeartForCharity.Services.Database
             // Isti korisnik ne može imati duplu vještinu
             modelBuilder.Entity<VolunteerSkill>()
                 .HasIndex(vs => new { vs.UserProfileId, vs.SkillId })
+                .IsUnique();
+
+            // Isti skill ne može biti dodan dva puta na isti posao
+            modelBuilder.Entity<VolunteerJobSkill>()
+                .HasIndex(vjs => new { vjs.VolunteerJobId, vjs.SkillId })
                 .IsUnique();
 
             // ========== OBIČNI INDEKSI ZA ČESTA PRETRAŽIVANJA ==========
@@ -225,6 +231,19 @@ namespace HeartForCharity.Services.Database
                 .HasOne(vs => vs.Skill)
                 .WithMany(s => s.VolunteerSkills)
                 .HasForeignKey(vs => vs.SkillId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Many-to-Many: VolunteerJob <-> Skill (preko VolunteerJobSkill)
+            modelBuilder.Entity<VolunteerJobSkill>()
+                .HasOne(vjs => vjs.VolunteerJob)
+                .WithMany(vj => vj.VolunteerJobSkills)
+                .HasForeignKey(vjs => vjs.VolunteerJobId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<VolunteerJobSkill>()
+                .HasOne(vjs => vjs.Skill)
+                .WithMany()
+                .HasForeignKey(vjs => vjs.SkillId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // UserProfile -> Recommendation (1:N)

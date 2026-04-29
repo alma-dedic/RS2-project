@@ -61,12 +61,31 @@ namespace HeartForCharity.Services
             return await GetAsync(search);
         }
 
+        public override async Task<VolunteerJobResponse?> GetByIdAsync(int id)
+        {
+            var entity = await _context.VolunteerJobs
+                .Include(v => v.OrganisationProfile)
+                .Include(v => v.Category)
+                .Include(v => v.Address)
+                    .ThenInclude(a => a!.City)
+                .Include(v => v.VolunteerJobSkills)
+                    .ThenInclude(vjs => vjs.Skill)
+                .Where(v => v.DeletedAt == null)
+                .FirstOrDefaultAsync(v => v.VolunteerJobId == id);
+
+            if (entity == null) return null;
+            return MapToResponse(entity);
+        }
+
         protected override IQueryable<VolunteerJob> ApplyFilter(IQueryable<VolunteerJob> query, VolunteerJobSearchObject search)
         {
-            query = query.Include(v => v.OrganisationProfile)
+            query = query.Where(v => v.DeletedAt == null)
+                         .Include(v => v.OrganisationProfile)
                          .Include(v => v.Category)
                          .Include(v => v.Address)
-                         .ThenInclude(a => a!.City);
+                         .ThenInclude(a => a!.City)
+                         .Include(v => v.VolunteerJobSkills)
+                         .ThenInclude(vjs => vjs.Skill);
 
             if (!string.IsNullOrWhiteSpace(search.FTS))
                 query = query.Where(v => v.Title.Contains(search.FTS) || v.Description!.Contains(search.FTS));
@@ -101,7 +120,14 @@ namespace HeartForCharity.Services
                 CategoryName          = entity.Category?.Name,
                 Title                 = entity.Title,
                 Description           = entity.Description,
-                Requirements          = entity.Requirements,
+                RequiredSkills        = entity.VolunteerJobSkills
+                                              .Select(vjs => new Model.Responses.SkillResponse
+                                              {
+                                                  SkillId     = vjs.SkillId,
+                                                  Name        = vjs.Skill?.Name ?? string.Empty,
+                                                  Description = vjs.Skill?.Description
+                                              })
+                                              .ToList(),
                 StartDate             = entity.StartDate,
                 EndDate               = entity.EndDate,
                 IsRemote              = entity.IsRemote,
@@ -109,6 +135,8 @@ namespace HeartForCharity.Services
                 PositionsFilled       = entity.PositionsFilled,
                 Status                = entity.Status.ToString(),
                 AddressId             = entity.AddressId,
+                CityId                = entity.Address?.CityId,
+                CountryId             = entity.Address?.City?.CountryId,
                 CityName              = entity.Address?.City?.Name,
                 CreatedAt             = entity.CreatedAt
             };
@@ -127,6 +155,9 @@ namespace HeartForCharity.Services
             entity.PositionsFilled       = 0;
             entity.CreatedAt             = DateTime.UtcNow;
             entity.UpdatedAt             = DateTime.UtcNow;
+
+            foreach (var skillId in request.SkillIds.Distinct())
+                entity.VolunteerJobSkills.Add(new VolunteerJobSkill { SkillId = skillId });
         }
 
         protected override async Task BeforeUpdate(VolunteerJob entity, VolunteerJobUpdateRequest request)
@@ -140,6 +171,14 @@ namespace HeartForCharity.Services
                 throw new UserException("You can only edit active volunteer jobs.");
 
             entity.UpdatedAt = DateTime.UtcNow;
+
+            var existing = await _context.VolunteerJobSkills
+                .Where(vjs => vjs.VolunteerJobId == entity.VolunteerJobId)
+                .ToListAsync();
+            _context.VolunteerJobSkills.RemoveRange(existing);
+
+            foreach (var skillId in request.SkillIds.Distinct())
+                _context.VolunteerJobSkills.Add(new VolunteerJobSkill { VolunteerJobId = entity.VolunteerJobId, SkillId = skillId });
         }
 
         protected override async Task BeforeDelete(VolunteerJob entity)
@@ -151,6 +190,22 @@ namespace HeartForCharity.Services
 
             if (entity.Status != VolunteerJobStatus.Active)
                 throw new UserException("You can only delete active volunteer jobs.");
+
+            if (entity.PositionsFilled > 0)
+                throw new UserException("Cannot delete a volunteer job that has approved volunteers.");
+        }
+
+        public override async Task<bool> DeleteAsync(int id)
+        {
+            var entity = await _context.Set<VolunteerJob>().FindAsync(id);
+            if (entity == null) return false;
+
+            await BeforeDelete(entity);
+
+            entity.DeletedAt = DateTime.UtcNow;
+            entity.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

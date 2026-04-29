@@ -36,6 +36,8 @@ namespace HeartForCharity.Services
             if (search.MaxRating.HasValue)
                 query = query.Where(r => r.Rating <= search.MaxRating);
 
+            query = query.OrderByDescending(r => r.CreatedAt);
+
             return query;
         }
 
@@ -51,6 +53,7 @@ namespace HeartForCharity.Services
                 ReviewerName = entity.UserProfile != null
                     ? $"{entity.UserProfile.FirstName} {entity.UserProfile.LastName}"
                     : string.Empty,
+                ReviewerAvatarUrl = entity.UserProfile?.ProfilePictureUrl,
                 Rating = entity.Rating,
                 Comment = entity.Comment,
                 CreatedAt = entity.CreatedAt

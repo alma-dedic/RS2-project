@@ -41,8 +41,9 @@ namespace HeartForCharity.Model.Validators
                 .When(x => !string.IsNullOrWhiteSpace(x.ContactEmail));
 
             RuleFor(x => x.ContactPhone)
-                .MaximumLength(20).WithMessage("Contact phone must not exceed 20 characters.")
-                .When(x => x.ContactPhone != null);
+                .Matches(@"^[+\d\s\-()]{6,20}$")
+                .WithMessage("Enter a valid contact phone (6-20 characters, e.g. +387 33 123 456).")
+                .When(x => !string.IsNullOrWhiteSpace(x.ContactPhone));
         }
     }
 }

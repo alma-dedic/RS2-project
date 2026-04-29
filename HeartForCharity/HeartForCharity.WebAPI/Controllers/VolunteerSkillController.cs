@@ -1,3 +1,4 @@
+using HeartForCharity.Model.Constants;
 using HeartForCharity.Model.Requests;
 using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
@@ -11,19 +12,24 @@ namespace HeartForCharity.WebAPI.Controllers
     [Route("api/[controller]")]
     public class VolunteerSkillController : BaseCRUDController<VolunteerSkillResponse, VolunteerSkillSearchObject, VolunteerSkillInsertRequest, VolunteerSkillInsertRequest>
     {
-        public VolunteerSkillController(IVolunteerSkillService service) : base(service) { }
+        private readonly IVolunteerSkillService _volunteerSkillService;
 
-        [Authorize(Roles = "User")]
+        public VolunteerSkillController(IVolunteerSkillService service) : base(service)
+        {
+            _volunteerSkillService = service;
+        }
+
+        [Authorize(Roles = Roles.User)]
+        [HttpGet("my")]
+        public async Task<PagedResult<VolunteerSkillResponse>> GetMy()
+            => await _volunteerSkillService.GetMyAsync();
+
+        [Authorize(Roles = Roles.User)]
         [HttpPost]
         public override async Task<VolunteerSkillResponse> Create([FromBody] VolunteerSkillInsertRequest request)
             => await base.Create(request);
 
-        [Authorize(Roles = "User")]
-        [HttpPut("{id}")]
-        public override async Task<VolunteerSkillResponse?> Update(int id, [FromBody] VolunteerSkillInsertRequest request)
-            => await base.Update(id, request);
-
-        [Authorize(Roles = "User")]
+        [Authorize(Roles = Roles.User)]
         [HttpDelete("{id}")]
         public override async Task<bool> Delete(int id)
             => await base.Delete(id);

@@ -33,19 +33,15 @@ namespace HeartForCharity.Services
                 totalCount = await query.CountAsync();
             }
 
-            if (!search.RetrieveAll)
-            {
-                const int MaxPageSize = 100;
-                if (search.PageSize.HasValue && search.PageSize.Value > MaxPageSize)
-                    search.PageSize = MaxPageSize;
+            const int MaxPageSize = 100;
+            if (!search.PageSize.HasValue || search.PageSize.Value <= 0)
+                search.PageSize = 10;
+            else if (search.PageSize.Value > MaxPageSize)
+                search.PageSize = MaxPageSize;
 
-                if (search.Page.HasValue)
-                    query = query.Skip(search.Page.Value * search.PageSize!.Value);
-                if (search.PageSize.HasValue)
-                    query = query.Take(search.PageSize.Value);
-            }
-
-
+            var page = search.Page ?? 0;
+            query = query.Skip(page * search.PageSize.Value)
+                         .Take(search.PageSize.Value);
 
             var list = await query.ToListAsync();
             return new PagedResult<T>

@@ -21,8 +21,8 @@ class CampaignUpdateRequest {
         'categoryId': categoryId,
         'title': title,
         'description': description,
-        'startDate': startDate?.toIso8601String(),
-        'endDate': endDate?.toIso8601String(),
+        'startDate': startDate?.toUtc().toIso8601String(),
+        'endDate': endDate?.toUtc().toIso8601String(),
         'targetAmount': targetAmount,
         'status': status,
       };

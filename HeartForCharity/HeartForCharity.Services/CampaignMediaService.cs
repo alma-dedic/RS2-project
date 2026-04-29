@@ -45,7 +45,7 @@ namespace HeartForCharity.Services
         {
             await VerifyCampaignOwnership(entity.CampaignId);
 
-            if (entity.Url != null && entity.Url.Contains("/uploads/"))
+            if (entity.Url != null && entity.Url.Contains("/api/upload/"))
             {
                 var fileName = Path.GetFileName(entity.Url);
                 var path = Path.Combine(_env.WebRootPath, "uploads", fileName);

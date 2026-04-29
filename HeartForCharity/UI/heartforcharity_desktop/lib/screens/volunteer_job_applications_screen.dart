@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:heartforcharity_desktop/model/responses/volunteer_application.dart';
 import 'package:heartforcharity_desktop/model/responses/volunteer_job.dart';
 import 'package:heartforcharity_desktop/model/search_objects/volunteer_application_search_object.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 import 'package:heartforcharity_desktop/providers/volunteer_application_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -72,7 +73,7 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
         });
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load applications: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load applications: ${BaseProvider.cleanError(e)}')));
     } finally {
       if (mounted) setState(() { _isLoading = false; _isLoadingMore = false; });
     }
@@ -82,9 +83,14 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
     final provider = context.read<VolunteerApplicationProvider>();
     try {
       await provider.approve(app.volunteerApplicationId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Application approved successfully.')),
+        );
+      }
       _load(reset: true);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(BaseProvider.cleanError(e))));
     }
   }
 
@@ -165,9 +171,14 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
     if (confirmed != true) return;
     try {
       await provider.reject(app.volunteerApplicationId, reason: reasonController.text.trim().isEmpty ? null : reasonController.text.trim());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Application rejected.')),
+        );
+      }
       _load(reset: true);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(BaseProvider.cleanError(e))));
     }
   }
 
@@ -404,21 +415,40 @@ class _ApplicationCard extends StatelessWidget {
                 ],
                 if (application.resumeUrl != null && application.resumeUrl!.isNotEmpty) ...[
                   Text('Resume', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
-                  const SizedBox(height: 4),
-                  GestureDetector(
-                    onTap: () async {
-                      final uri = Uri.tryParse(application.resumeUrl!);
-                      if (uri != null && await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
-                      }
-                    },
-                    child: Text(
-                      application.resumeUrl!,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF3B82F6), // semantic link blue — intentional
-                        decoration: TextDecoration.underline,
-                        decorationColor: Color(0xFF3B82F6),
+                  const SizedBox(height: 6),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () async {
+                        final uri = Uri.tryParse(application.resumeUrl!);
+                        if (uri != null && await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3B82F6).withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.3)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.picture_as_pdf_outlined, size: 16, color: Color(0xFF3B82F6)),
+                            SizedBox(width: 6),
+                            Text(
+                              'Open resume',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF3B82F6),
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(Icons.open_in_new, size: 14, color: Color(0xFF3B82F6)),
+                          ],
+                        ),
                       ),
                     ),
                   ),

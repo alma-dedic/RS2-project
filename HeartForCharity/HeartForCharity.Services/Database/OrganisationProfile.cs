@@ -38,8 +38,6 @@ namespace HeartForCharity.Services.Database
         [ForeignKey(nameof(OrganisationType))]
         public int? OrganisationTypeId { get; set; }
 
-        public bool IsVerified { get; set; } = false;
-
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? DeletedAt { get; set; }

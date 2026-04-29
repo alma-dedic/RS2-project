@@ -8,7 +8,6 @@ class OrganisationProfile {
   final String? logoUrl;
   final int? organisationTypeId;
   final String? organisationTypeName;
-  final bool isVerified;
   final int? addressId;
   final String? cityName;
   final String? countryName;
@@ -24,7 +23,6 @@ class OrganisationProfile {
     this.logoUrl,
     this.organisationTypeId,
     this.organisationTypeName,
-    this.isVerified = false,
     this.addressId,
     this.cityName,
     this.countryName,
@@ -42,7 +40,6 @@ class OrganisationProfile {
         logoUrl: json['logoUrl'],
         organisationTypeId: json['organisationTypeId'],
         organisationTypeName: json['organisationTypeName'],
-        isVerified: json['isVerified'] ?? false,
         addressId: json['addressId'],
         cityName: json['cityName'],
         countryName: json['countryName'],
@@ -61,7 +58,6 @@ class OrganisationProfile {
         'logoUrl': logoUrl,
         'organisationTypeId': organisationTypeId,
         'organisationTypeName': organisationTypeName,
-        'isVerified': isVerified,
         'addressId': addressId,
         'cityName': cityName,
         'countryName': countryName,

@@ -33,11 +33,15 @@ namespace HeartForCharity.Services
             var baseCampaigns = _context.Campaigns
                 .Where(c => c.OrganisationProfileId == orgId && c.DeletedAt == null);
 
-            var activeCampaigns = await baseCampaigns
-                .CountAsync(c => c.Status == CampaignStatus.Active);
+            var campaignCountsByStatus = await baseCampaigns
+                .GroupBy(c => c.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
 
-            var finishedCampaigns = await baseCampaigns
-                .CountAsync(c => c.Status == CampaignStatus.Completed);
+            var activeCampaigns = campaignCountsByStatus
+                .FirstOrDefault(x => x.Status == CampaignStatus.Active)?.Count ?? 0;
+            var finishedCampaigns = campaignCountsByStatus
+                .FirstOrDefault(x => x.Status == CampaignStatus.Completed)?.Count ?? 0;
 
             var jobIds = _context.VolunteerJobs
                 .Where(j => j.OrganisationProfileId == orgId && j.DeletedAt == null)

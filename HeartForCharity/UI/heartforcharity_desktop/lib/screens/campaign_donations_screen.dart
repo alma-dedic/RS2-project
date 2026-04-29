@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:heartforcharity_desktop/model/responses/campaign.dart';
 import 'package:heartforcharity_desktop/model/responses/donation.dart';
 import 'package:heartforcharity_desktop/model/search_objects/donation_search_object.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 import 'package:heartforcharity_desktop/providers/donation_provider.dart';
+import 'package:heartforcharity_desktop/utils/auth_image.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -82,7 +84,7 @@ class _CampaignDonationsScreenState extends State<CampaignDonationsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load donations: $e')),
+          SnackBar(content: Text('Failed to load donations: ${BaseProvider.cleanError(e)}')),
         );
       }
     } finally {
@@ -349,15 +351,7 @@ class _DonationCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: colorScheme.surfaceContainerHighest,
-            ),
-            child: Icon(Icons.person, size: 24, color: colorScheme.onSurfaceVariant),
-          ),
+          _buildDonorAvatar(colorScheme),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
@@ -384,6 +378,35 @@ class _DonationCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDonorAvatar(ColorScheme colorScheme) {
+    if (donation.isAnonymous) {
+      return Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: colorScheme.surfaceContainerHighest,
+        ),
+        child: Icon(Icons.person, size: 24, color: colorScheme.onSurfaceVariant),
+      );
+    }
+
+    final hasAvatar = donation.donorAvatarUrl != null && donation.donorAvatarUrl!.isNotEmpty;
+    return CircleAvatar(
+      radius: 22,
+      backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
+      backgroundImage: hasAvatar ? authNetworkImage(donation.donorAvatarUrl!) : null,
+      child: hasAvatar
+          ? null
+          : Text(
+              (donation.donorName != null && donation.donorName!.isNotEmpty)
+                  ? donation.donorName![0].toUpperCase()
+                  : '?',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: colorScheme.primary),
+            ),
     );
   }
 }

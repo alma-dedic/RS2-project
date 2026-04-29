@@ -1,7 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:heartforcharity_desktop/model/responses/volunteer_job.dart';
 import 'package:heartforcharity_desktop/model/search_objects/volunteer_job_search_object.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
+import 'package:heartforcharity_desktop/providers/category_provider.dart';
+import 'package:heartforcharity_shared/providers/city_provider.dart';
 import 'package:heartforcharity_desktop/providers/volunteer_job_provider.dart';
 import 'package:heartforcharity_desktop/screens/volunteer_job_add_edit_screen.dart';
 import 'package:heartforcharity_desktop/screens/volunteer_job_applications_screen.dart';
@@ -81,7 +85,7 @@ class _VolunteerJobsScreenState extends State<VolunteerJobsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load volunteer jobs: $e')),
+          SnackBar(content: Text('Failed to load volunteer jobs: ${BaseProvider.cleanError(e)}')),
         );
       }
     } finally {
@@ -95,6 +99,44 @@ class _VolunteerJobsScreenState extends State<VolunteerJobsScreen> {
   }
 
   void _openAdd() async {
+    final categoryProvider = context.read<CategoryProvider>();
+    final cityProvider = context.read<CityProvider>();
+
+    try {
+      final categoriesResult = await categoryProvider.get(
+        filter: {'appliesTo': 'VolunteerJob', 'pageSize': 1},
+      );
+      if (!mounted) return;
+      if (categoriesResult.items.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+            'Cannot create a volunteer job: no Volunteer Job categories exist. '
+            'Please ask an admin to add a category first.',
+          ),
+        ));
+        return;
+      }
+
+      final citiesResult = await cityProvider.get(filter: {'pageSize': 1});
+      if (!mounted) return;
+      if (citiesResult.items.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+            'Cannot create a volunteer job: no countries/cities exist. '
+            'Please ask an admin to add at least one country and city first.',
+          ),
+        ));
+        return;
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to verify prerequisites: ${BaseProvider.cleanError(e)}')),
+        );
+      }
+      return;
+    }
+
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const VolunteerJobAddEditScreen()),
     );
@@ -415,13 +457,11 @@ class _VolunteerJobCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    Expanded(
-                      child: Text(
-                        job.description ?? '',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, height: 1.4),
-                      ),
+                    Text(
+                      job.description ?? '',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, height: 1.4),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -432,6 +472,22 @@ class _VolunteerJobCard extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                         fontStyle: FontStyle.italic,
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 14,
+                      runSpacing: 4,
+                      children: [
+                        if (job.startDate != null && job.endDate != null)
+                          _MetaItem(
+                            icon: Icons.calendar_today_outlined,
+                            text: '${DateFormat('d MMM').format(job.startDate!)} – ${DateFormat('d MMM yyyy').format(job.endDate!)}',
+                          ),
+                        if (!job.isRemote && job.cityName != null && job.cityName!.isNotEmpty)
+                          _MetaItem(icon: Icons.location_on_outlined, text: job.cityName!),
+                        if (job.categoryName != null && job.categoryName!.isNotEmpty)
+                          _MetaItem(icon: Icons.local_offer_outlined, text: job.categoryName!),
+                      ],
                     ),
                   ],
                 ),
@@ -497,6 +553,25 @@ class _ActionButton extends StatelessWidget {
         ),
         child: Text(label),
       ),
+    );
+  }
+}
+
+class _MetaItem extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _MetaItem({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: cs.onSurfaceVariant),
+        const SizedBox(width: 4),
+        Text(text, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+      ],
     );
   }
 }

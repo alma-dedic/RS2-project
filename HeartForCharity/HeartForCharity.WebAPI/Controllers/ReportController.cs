@@ -1,3 +1,4 @@
+using HeartForCharity.Model.Constants;
 using HeartForCharity.Model.Requests;
 using HeartForCharity.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +8,7 @@ namespace HeartForCharity.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Organisation")]
+    [Authorize(Roles = Roles.Organisation)]
     public class ReportController : ControllerBase
     {
         private readonly IReportService _reportService;

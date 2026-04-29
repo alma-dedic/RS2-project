@@ -17,7 +17,6 @@ namespace HeartForCharity.Model.Responses
         public string? LogoUrl { get; set; }
         public int? OrganisationTypeId { get; set; }
         public string? OrganisationTypeName { get; set; }
-        public bool IsVerified { get; set; }
         public int? AddressId { get; set; }
         public string? CityName { get; set; }
         public string? CountryName { get; set; }

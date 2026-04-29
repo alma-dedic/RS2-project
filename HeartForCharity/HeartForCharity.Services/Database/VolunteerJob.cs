@@ -28,9 +28,6 @@ namespace HeartForCharity.Services.Database
         [MaxLength(4000)]
         public string? Description { get; set; }
 
-        [MaxLength(2000)]
-        public string? Requirements { get; set; }
-
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
 
@@ -50,5 +47,6 @@ namespace HeartForCharity.Services.Database
         public virtual Category? Category { get; set; }
         public virtual Address? Address { get; set; }
         public virtual ICollection<VolunteerApplication> VolunteerApplications { get; set; } = new List<VolunteerApplication>();
+        public virtual ICollection<VolunteerJobSkill> VolunteerJobSkills { get; set; } = new List<VolunteerJobSkill>();
     }
 }

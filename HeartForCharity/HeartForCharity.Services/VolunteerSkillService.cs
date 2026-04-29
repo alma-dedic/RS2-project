@@ -6,6 +6,7 @@ using HeartForCharity.Services.Database;
 using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -44,6 +45,15 @@ namespace HeartForCharity.Services
             };
         }
 
+        public override async Task<VolunteerSkillResponse> CreateAsync(VolunteerSkillInsertRequest request)
+        {
+            var result = await base.CreateAsync(request);
+            var entity = await _context.VolunteerSkills
+                .Include(vs => vs.Skill)
+                .FirstOrDefaultAsync(vs => vs.VolunteerSkillId == result.VolunteerSkillId);
+            return entity != null ? MapToResponse(entity) : result;
+        }
+
         protected override async Task BeforeInsert(VolunteerSkill entity, VolunteerSkillInsertRequest request)
         {
             var userProfile = await _context.UserProfiles
@@ -61,6 +71,26 @@ namespace HeartForCharity.Services
 
             entity.UserProfileId = userProfile.UserProfileId;
             entity.CreatedAt = DateTime.UtcNow;
+        }
+
+        public async Task<PagedResult<VolunteerSkillResponse>> GetMyAsync()
+        {
+            var userProfile = await _context.UserProfiles
+                .FirstOrDefaultAsync(up => up.UserId == _currentUserService.UserId);
+
+            if (userProfile == null)
+                throw new UserException("User profile not found.");
+
+            var skills = await _context.VolunteerSkills
+                .Include(vs => vs.Skill)
+                .Where(vs => vs.UserProfileId == userProfile.UserProfileId)
+                .ToListAsync();
+
+            return new PagedResult<VolunteerSkillResponse>
+            {
+                Items      = skills.Select(MapToResponse).ToList(),
+                TotalCount = skills.Count
+            };
         }
 
         protected override async Task BeforeDelete(VolunteerSkill entity)

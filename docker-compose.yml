@@ -1,0 +1,82 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04
+    container_name: heartforcharity-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Heart4Charity!2026"
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - db-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: heartforcharity-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./HeartForCharity
+      dockerfile: HeartForCharity.WebAPI/Dockerfile
+    image: heartforcharity-api:1.0.0
+    container_name: heartforcharity-api
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - ./HeartForCharity/HeartForCharity.WebAPI/.env
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=210002;User Id=sa;Password=Heart4Charity!2026;TrustServerCertificate=True"
+      RabbitMQ__Connection: "host=rabbitmq;username=guest;password=guest"
+    ports:
+      - "5145:5145"
+    volumes:
+      - api-uploads:/app/wwwroot/uploads
+    restart: unless-stopped
+
+  subscriber:
+    build:
+      context: ./HeartForCharity
+      dockerfile: HeartForCharity.Subscriber/Dockerfile
+    image: heartforcharity-subscriber:1.0.0
+    container_name: heartforcharity-subscriber
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      api:
+        condition: service_started
+    env_file:
+      - ./HeartForCharity/HeartForCharity.WebAPI/.env
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=210002;User Id=sa;Password=Heart4Charity!2026;TrustServerCertificate=True"
+      RabbitMQ__Connection: "host=rabbitmq;username=guest;password=guest"
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  rabbitmq-data:
+  api-uploads:

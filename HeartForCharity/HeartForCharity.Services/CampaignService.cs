@@ -61,9 +61,24 @@ namespace HeartForCharity.Services
             return await GetAsync(search);
         }
 
+        public override async Task<CampaignResponse?> GetByIdAsync(int id)
+        {
+            var entity = await _context.Campaigns
+                .Include(c => c.OrganisationProfile)
+                .Include(c => c.Category)
+                .Include(c => c.CampaignMedias)
+                .Include(c => c.Donations)
+                .Where(c => c.DeletedAt == null)
+                .FirstOrDefaultAsync(c => c.CampaignId == id);
+
+            if (entity == null) return null;
+            return MapToResponse(entity);
+        }
+
         protected override IQueryable<Campaign> ApplyFilter(IQueryable<Campaign> query, CampaignSearchObject search)
         {
-            query = query.Include(c => c.OrganisationProfile)
+            query = query.Where(c => c.DeletedAt == null)
+                         .Include(c => c.OrganisationProfile)
                          .Include(c => c.Category)
                          .Include(c => c.CampaignMedias)
                          .Include(c => c.Donations);
@@ -102,7 +117,7 @@ namespace HeartForCharity.Services
                 Status = entity.Status,
                 CreatedAt = entity.CreatedAt,
                 UpdatedAt = entity.UpdatedAt,
-                DonationCount = entity.Donations?.Count ?? 0,
+                DonationCount = entity.Donations?.Count(d => d.Status == DonationStatus.Success) ?? 0,
                 CampaignMedias = entity.CampaignMedias?.Select(m => new CampaignMediaResponse
                 {
                     CampaignMediaId = m.CampaignMediaId,
@@ -154,6 +169,19 @@ namespace HeartForCharity.Services
             var donationCount = await _context.Donations.CountAsync(d => d.CampaignId == entity.CampaignId);
             if (donationCount > 0)
                 throw new UserException("Cannot delete a campaign that has donations.");
+        }
+
+        public override async Task<bool> DeleteAsync(int id)
+        {
+            var entity = await _context.Set<Campaign>().FindAsync(id);
+            if (entity == null) return false;
+
+            await BeforeDelete(entity);
+
+            entity.DeletedAt = DateTime.UtcNow;
+            entity.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

@@ -9,6 +9,5 @@ namespace HeartForCharity.Model.SearchObjects
     public class OrganisationProfileSearchObject : BaseSearchObject
     {
         public int? OrganisationTypeId { get; set; }
-        public bool? IsVerified { get; set; }
     }
 }

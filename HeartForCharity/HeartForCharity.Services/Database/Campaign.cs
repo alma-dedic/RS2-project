@@ -39,11 +39,9 @@ namespace HeartForCharity.Services.Database
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? DeletedAt { get; set; }
 
-        // Denormalizovano polje (preporuka)
         [Column(TypeName = "decimal(18,2)")]
         public decimal CurrentAmount { get; set; } = 0;
 
-        // Navigacijska svojstva
         public virtual OrganisationProfile OrganisationProfile { get; set; } = null!;
         public virtual Category? Category { get; set; }
         public virtual ICollection<Donation> Donations { get; set; } = new List<Donation>();

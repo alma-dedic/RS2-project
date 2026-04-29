@@ -4,8 +4,10 @@ using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
 using HeartForCharity.Services.Database;
 using MapsterMapper;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -14,11 +16,13 @@ namespace HeartForCharity.Services
     public class UserProfileService : BaseCRUDService<UserProfileResponse, UserProfileSearchObject, UserProfile, UserProfileInsertRequest, UserProfileUpdateRequest>, IUserProfileService
     {
         private readonly ICurrentUserService _currentUserService;
+        private readonly IWebHostEnvironment _env;
 
-        public UserProfileService(HeartForCharityDbContext context, IMapper mapper, ICurrentUserService currentUserService)
+        public UserProfileService(HeartForCharityDbContext context, IMapper mapper, ICurrentUserService currentUserService, IWebHostEnvironment env)
             : base(context, mapper)
         {
             _currentUserService = currentUserService;
+            _env = env;
         }
 
         protected override IQueryable<UserProfile> ApplyFilter(IQueryable<UserProfile> query, UserProfileSearchObject search)
@@ -72,8 +76,23 @@ namespace HeartForCharity.Services
             if (entity.UserId != _currentUserService.UserId)
                 throw new ForbiddenException("You can only edit your own profile.");
 
+            if (entity.ProfilePictureUrl != null
+                && entity.ProfilePictureUrl != request.ProfilePictureUrl
+                && entity.ProfilePictureUrl.Contains("/api/upload/"))
+            {
+                DeleteUploadedFile(entity.ProfilePictureUrl);
+            }
+
             entity.UpdatedAt = DateTime.UtcNow;
             return Task.CompletedTask;
+        }
+
+        private void DeleteUploadedFile(string url)
+        {
+            var fileName = Path.GetFileName(url);
+            var path = Path.Combine(_env.WebRootPath, "uploads", fileName);
+            if (File.Exists(path))
+                File.Delete(path);
         }
     }
 }

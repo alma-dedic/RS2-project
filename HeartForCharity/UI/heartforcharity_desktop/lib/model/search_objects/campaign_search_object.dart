@@ -11,7 +11,6 @@ class CampaignSearchObject extends BaseSearchObject {
     super.page,
     super.pageSize,
     super.includeTotalCount,
-    super.retrieveAll,
     this.title,
     this.categoryId,
     this.status,

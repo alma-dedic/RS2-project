@@ -73,6 +73,8 @@ namespace HeartForCharity.Services
                 query = query.Where(va => va.UserProfile != null &&
                     (va.UserProfile.FirstName.Contains(search.FTS) || va.UserProfile.LastName.Contains(search.FTS)));
 
+            query = query.OrderByDescending(va => va.AppliedAt);
+
             return query;
         }
 

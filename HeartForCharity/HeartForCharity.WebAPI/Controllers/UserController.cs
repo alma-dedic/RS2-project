@@ -1,3 +1,4 @@
+using HeartForCharity.Model.Constants;
 using HeartForCharity.Model.Requests;
 using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
@@ -14,16 +15,22 @@ namespace HeartForCharity.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = Roles.Admin)]
     public class UserController : BaseCRUDController<UserResponse, UserSearchObject, UserInsertRequest, UserUpdateRequest>
     {
         private readonly IUserService _userService;
-        private readonly IConfiguration _configuration;
+        private readonly string _jwtKey;
+        private readonly int _jwtExpiryMinutes;
+        private readonly string _jwtIssuer;
+        private readonly string _jwtAudience;
 
         public UserController(IUserService service, IConfiguration configuration) : base(service)
         {
             _userService = service;
-            _configuration = configuration;
+            _jwtKey = configuration["Jwt:Key"]!;
+            _jwtExpiryMinutes = int.Parse(configuration["Jwt:ExpiryMinutes"]!);
+            _jwtIssuer = configuration["Jwt:Issuer"]!;
+            _jwtAudience = configuration["Jwt:Audience"]!;
         }
 
         [AllowAnonymous]
@@ -85,7 +92,7 @@ namespace HeartForCharity.WebAPI.Controllers
             var accessToken = GenerateAccessToken(user);
             var refreshToken = await _userService.GenerateRefreshTokenAsync(user.UserId);
             var refreshTokenExpiry = DateTime.UtcNow.AddDays(7);
-            var accessTokenExpiry = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpiryMinutes"]!));
+            var accessTokenExpiry = DateTime.UtcNow.AddMinutes(_jwtExpiryMinutes);
 
             return Ok(new LoginResponse
             {
@@ -114,7 +121,7 @@ namespace HeartForCharity.WebAPI.Controllers
             var accessToken = GenerateAccessToken(user);
             var newRefreshToken = await _userService.GenerateRefreshTokenAsync(userId);
             var refreshTokenExpiry = DateTime.UtcNow.AddDays(7);
-            var accessTokenExpiry = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpiryMinutes"]!));
+            var accessTokenExpiry = DateTime.UtcNow.AddMinutes(_jwtExpiryMinutes);
 
             return Ok(new LoginResponse
             {
@@ -136,9 +143,8 @@ namespace HeartForCharity.WebAPI.Controllers
 
         private string GenerateAccessToken(UserResponse user)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expiryMinutes = int.Parse(_configuration["Jwt:ExpiryMinutes"]!);
 
             var claims = new[]
             {
@@ -149,10 +155,10 @@ namespace HeartForCharity.WebAPI.Controllers
             };
 
             var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
+                issuer: _jwtIssuer,
+                audience: _jwtAudience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
+                expires: DateTime.UtcNow.AddMinutes(_jwtExpiryMinutes),
                 signingCredentials: credentials
             );
 

@@ -8,6 +8,7 @@ import 'package:heartforcharity_desktop/screens/login_screen.dart';
 import 'package:heartforcharity_desktop/screens/profile_screen.dart';
 import 'package:heartforcharity_desktop/screens/reviews_screen.dart';
 import 'package:heartforcharity_desktop/screens/volunteer_jobs_screen.dart';
+import 'package:heartforcharity_desktop/utils/auth_image.dart';
 import 'package:provider/provider.dart';
 
 class MainShell extends StatefulWidget {
@@ -47,7 +48,9 @@ class _MainShellState extends State<MainShell> {
     try {
       final profile = await context.read<OrganisationProfileProvider>().getMe();
       if (mounted) setState(() => _orgProfile = profile);
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    }
   }
 
   void _onNavItemSelected(int index) {
@@ -151,10 +154,10 @@ class _Sidebar extends StatelessWidget {
                   ),
                   child: ClipOval(
                     child: orgProfile?.logoUrl != null && orgProfile!.logoUrl!.isNotEmpty
-                        ? Image.network(
-                            orgProfile!.logoUrl!,
+                        ? Image(
+                            image: authNetworkImage(orgProfile!.logoUrl!),
                             fit: BoxFit.cover,
-                            errorBuilder: (_, e, s) => _buildInitials(),
+                            errorBuilder: (_, _, _) => _buildInitials(),
                           )
                         : _buildInitials(),
                   ),

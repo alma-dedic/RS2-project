@@ -3,8 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:heartforcharity_desktop/model/requests/volunteer_job_insert_request.dart';
 import 'package:heartforcharity_desktop/model/requests/volunteer_job_update_request.dart';
 import 'package:heartforcharity_desktop/model/responses/category.dart';
+import 'package:heartforcharity_shared/model/responses/city.dart';
+import 'package:heartforcharity_shared/model/responses/country.dart';
+import 'package:heartforcharity_desktop/model/responses/skill.dart';
 import 'package:heartforcharity_desktop/model/responses/volunteer_job.dart';
+import 'package:heartforcharity_shared/providers/address_provider.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 import 'package:heartforcharity_desktop/providers/category_provider.dart';
+import 'package:heartforcharity_shared/providers/city_provider.dart';
+import 'package:heartforcharity_shared/providers/country_provider.dart';
+import 'package:heartforcharity_desktop/providers/skill_provider.dart';
 import 'package:heartforcharity_desktop/providers/volunteer_job_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -23,28 +31,42 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _requirementsController = TextEditingController();
   final _positionsController = TextEditingController();
 
   List<Category> _categories = [];
+  List<Skill> _allSkills = [];
+  final Set<int> _selectedSkillIds = {};
   int? _selectedCategoryId;
   DateTime? _startDate;
   DateTime? _endDate;
   bool _isRemote = false;
   bool _isLoading = false;
+  String? _startDateError;
+  String? _endDateError;
+
+  List<Country> _countries = [];
+  List<City> _cities = [];
+  int? _selectedCountryId;
+  int? _selectedCityId;
+  int? _existingAddressId;
+  String? _locationError;
 
   @override
   void initState() {
     super.initState();
-    _loadCategories();
     if (widget.isEdit) _prefill();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.wait([_loadCategories(), _loadSkills(), _loadCountries()]);
+      if (_selectedCountryId != null) {
+        await _loadCities(_selectedCountryId!);
+      }
+    });
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _requirementsController.dispose();
     _positionsController.dispose();
     super.dispose();
   }
@@ -53,21 +75,75 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
     final j = widget.job!;
     _titleController.text = j.title;
     _descriptionController.text = j.description ?? '';
-    _requirementsController.text = j.requirements ?? '';
     _positionsController.text = j.positionsAvailable.toString();
     _selectedCategoryId = j.categoryId;
     _startDate = j.startDate;
     _endDate = j.endDate;
     _isRemote = j.isRemote;
+    _selectedSkillIds.addAll(j.requiredSkills.map((s) => s.skillId));
+    _existingAddressId = j.addressId;
+    _selectedCountryId = j.countryId;
+    _selectedCityId = j.cityId;
   }
 
   Future<void> _loadCategories() async {
     try {
       final result = await context.read<CategoryProvider>().get(
-            filter: {'retrieveAll': true, 'appliesTo': 'VolunteerJob'},
+            filter: {'pageSize': 100, 'appliesTo': 'VolunteerJob'},
           );
       if (mounted) setState(() => _categories = result.items);
-    } catch (_) {}
+    } catch (e) {
+      if (mounted && !BaseProvider.isSessionExpired(e)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load categories: ${BaseProvider.cleanError(e)}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadSkills() async {
+    try {
+      final result = await context.read<SkillProvider>().get(
+            filter: {'pageSize': 100},
+          );
+      if (mounted) setState(() => _allSkills = result.items);
+    } catch (e) {
+      if (mounted && !BaseProvider.isSessionExpired(e)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load skills: ${BaseProvider.cleanError(e)}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadCountries() async {
+    try {
+      final result = await context.read<CountryProvider>().get(
+            filter: {'pageSize': 200},
+          );
+      if (mounted) setState(() => _countries = result.items);
+    } catch (e) {
+      if (mounted && !BaseProvider.isSessionExpired(e)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load countries: ${BaseProvider.cleanError(e)}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadCities(int countryId) async {
+    try {
+      final result = await context.read<CityProvider>().get(
+            filter: {'countryId': countryId, 'pageSize': 500},
+          );
+      if (mounted) setState(() => _cities = result.items);
+    } catch (e) {
+      if (mounted && !BaseProvider.isSessionExpired(e)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load cities: ${BaseProvider.cleanError(e)}')),
+        );
+      }
+    }
   }
 
   Future<void> _pickDate({required bool isStart}) async {
@@ -88,24 +164,73 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
       } else {
         _endDate = picked;
       }
+      _startDateError = null;
+      _endDateError = null;
     });
   }
 
+  bool _validateDates() {
+    String? startErr;
+    String? endErr;
+    if (_startDate == null) startErr = 'Start date is required.';
+    if (_endDate == null) endErr = 'End date is required.';
+    if (startErr == null && endErr == null && !_endDate!.isAfter(_startDate!)) {
+      endErr = 'End date must be after start date.';
+    }
+    setState(() {
+      _startDateError = startErr;
+      _endDateError = endErr;
+    });
+    return startErr == null && endErr == null;
+  }
+
+  bool _validateLocation() {
+    if (_isRemote) {
+      setState(() => _locationError = null);
+      return true;
+    }
+    String? err;
+    if (_selectedCountryId == null) {
+      err = 'Please select a country and city for non-remote jobs.';
+    } else if (_selectedCityId == null) {
+      err = 'Please select a city for this country.';
+    }
+    setState(() => _locationError = err);
+    return err == null;
+  }
+
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    final formOk = _formKey.currentState!.validate();
+    final datesOk = _validateDates();
+    final locationOk = _validateLocation();
+    if (!formOk || !datesOk || !locationOk) return;
     setState(() => _isLoading = true);
 
     try {
       final jobProvider = context.read<VolunteerJobProvider>();
+      final addressProvider = context.read<AddressProvider>();
       final positions = int.parse(_positionsController.text.trim());
+
+      int? addressId;
+      if (!_isRemote && _selectedCityId != null) {
+        final addrBody = {'cityId': _selectedCityId};
+        if (_existingAddressId != null) {
+          await addressProvider.update(_existingAddressId!, addrBody);
+          addressId = _existingAddressId;
+        } else {
+          final addr = await addressProvider.insert(addrBody);
+          addressId = addr.addressId;
+        }
+      }
 
       if (widget.isEdit) {
         final j = widget.job!;
         final request = VolunteerJobUpdateRequest(
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
-          requirements: _requirementsController.text.trim().isEmpty ? null : _requirementsController.text.trim(),
+          skillIds: _selectedSkillIds.toList(),
           categoryId: _selectedCategoryId,
+          addressId: addressId,
           startDate: _startDate,
           endDate: _endDate,
           isRemote: _isRemote,
@@ -117,8 +242,9 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
         final request = VolunteerJobInsertRequest(
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
-          requirements: _requirementsController.text.trim().isEmpty ? null : _requirementsController.text.trim(),
+          skillIds: _selectedSkillIds.toList(),
           categoryId: _selectedCategoryId,
+          addressId: addressId,
           startDate: _startDate,
           endDate: _endDate,
           isRemote: _isRemote,
@@ -127,11 +253,16 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
         await jobProvider.insert(request.toJson());
       }
 
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(widget.isEdit ? 'Volunteer job updated successfully.' : 'Volunteer job created successfully.')),
+        );
+        Navigator.of(context).pop(true);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e')),
+          SnackBar(content: Text('Failed to save: ${BaseProvider.cleanError(e)}')),
         );
       }
     } finally {
@@ -146,9 +277,14 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
     setState(() => _isLoading = true);
     try {
       await jobProvider.complete(widget.job!.volunteerJobId);
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Volunteer job marked as completed.')),
+        );
+        Navigator.of(context).pop(true);
+      }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(BaseProvider.cleanError(e))));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -161,24 +297,14 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
     setState(() => _isLoading = true);
     try {
       await jobProvider.cancel(widget.job!.volunteerJobId);
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Volunteer job cancelled.')),
+        );
+        Navigator.of(context).pop(true);
+      }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _deleteJob() async {
-    final jobProvider = context.read<VolunteerJobProvider>();
-    final confirmed = await _confirm('Delete job', 'Permanently delete this volunteer job? This cannot be undone.');
-    if (!confirmed) return;
-    setState(() => _isLoading = true);
-    try {
-      await jobProvider.delete(widget.job!.volunteerJobId);
-      if (mounted) Navigator.of(context).pop(true);
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(BaseProvider.cleanError(e))));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -207,7 +333,6 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isActive = widget.job?.status == 'Active';
-    final canDelete = isActive && (widget.job?.positionsFilled ?? 0) == 0;
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerHighest,
@@ -284,15 +409,9 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                           ),
                           const SizedBox(height: 12),
 
-                          _buildLabel('Requirements'),
+                          _buildLabel('Required skills (optional)'),
                           const SizedBox(height: 5),
-                          TextFormField(
-                            controller: _requirementsController,
-                            maxLines: 2,
-                            maxLength: 2000,
-                            enabled: !widget.isEdit || isActive,
-                            decoration: _inputDecoration('Enter requirements (optional)', colorScheme),
-                          ),
+                          _buildSkillsSelector(enabled: !widget.isEdit || isActive, colorScheme: colorScheme),
                           const SizedBox(height: 12),
 
                           Row(
@@ -308,6 +427,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                                       hint: 'Select start date',
                                       onTap: (!widget.isEdit || isActive) ? () => _pickDate(isStart: true) : null,
                                       colorScheme: colorScheme,
+                                      errorText: _startDateError,
                                     ),
                                   ],
                                 ),
@@ -324,6 +444,7 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                                       hint: 'Select end date',
                                       onTap: (!widget.isEdit || isActive) ? () => _pickDate(isStart: false) : null,
                                       colorScheme: colorScheme,
+                                      errorText: _endDateError,
                                     ),
                                   ],
                                 ),
@@ -377,7 +498,10 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                               Switch(
                                 value: _isRemote,
                                 onChanged: (!widget.isEdit || isActive)
-                                    ? (val) => setState(() => _isRemote = val)
+                                    ? (val) => setState(() {
+                                          _isRemote = val;
+                                          if (val) _locationError = null;
+                                        })
                                     : null,
                               ),
                               const SizedBox(width: 8),
@@ -387,7 +511,44 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
+
+                          if (!_isRemote) ...[
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildLabel('Country'),
+                                      const SizedBox(height: 6),
+                                      _buildCountryDropdown(enabled: !widget.isEdit || isActive, colorScheme: colorScheme),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildLabel('City'),
+                                      const SizedBox(height: 6),
+                                      _buildCityDropdown(enabled: !widget.isEdit || isActive, colorScheme: colorScheme),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (_locationError != null) ...[
+                              const SizedBox(height: 6),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 12),
+                                child: Text(_locationError!, style: TextStyle(fontSize: 12, color: colorScheme.error)),
+                              ),
+                            ],
+                            const SizedBox(height: 12),
+                          ],
+                          const SizedBox(height: 8),
 
                           if (!widget.isEdit || isActive) ...[
                             Row(
@@ -458,19 +619,6 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
                                 ),
                               ],
                             ),
-                            if (canDelete) ...[
-                              const SizedBox(height: 12),
-                              Center(
-                                child: TextButton(
-                                  onPressed: _isLoading ? null : _deleteJob,
-                                  style: TextButton.styleFrom(foregroundColor: colorScheme.onSurfaceVariant),
-                                  child: const Text(
-                                    'Delete job',
-                                    style: TextStyle(fontSize: 13, decoration: TextDecoration.underline),
-                                  ),
-                                ),
-                              ),
-                            ],
                           ],
 
                           if (widget.isEdit && !isActive) ...[
@@ -502,6 +650,62 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
     );
   }
 
+  Widget _buildSkillsSelector({required bool enabled, required ColorScheme colorScheme}) {
+    if (_allSkills.isEmpty) {
+      return GestureDetector(
+        onTap: _loadSkills,
+        child: Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: colorScheme.outline),
+          ),
+          alignment: Alignment.centerLeft,
+          child: Text('Tap to load skills...', style: TextStyle(fontSize: 14, color: colorScheme.outlineVariant)),
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: enabled ? colorScheme.surfaceContainerLow : const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colorScheme.outline),
+      ),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: _allSkills.map((skill) {
+          final selected = _selectedSkillIds.contains(skill.skillId);
+          return FilterChip(
+            label: Text(skill.name, style: const TextStyle(fontSize: 13)),
+            selected: selected,
+            onSelected: enabled
+                ? (_) => setState(() {
+                      if (selected) {
+                        _selectedSkillIds.remove(skill.skillId);
+                      } else {
+                        _selectedSkillIds.add(skill.skillId);
+                      }
+                    })
+                : null,
+            selectedColor: colorScheme.primary.withValues(alpha: 0.15),
+            checkmarkColor: colorScheme.primary,
+            labelStyle: TextStyle(
+              color: selected ? colorScheme.primary : colorScheme.onSurface,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+            ),
+            side: BorderSide(color: selected ? colorScheme.primary : colorScheme.outline),
+            padding: EdgeInsets.zero,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildLabel(String text) {
     return Text(text, style: Theme.of(context).textTheme.titleSmall);
   }
@@ -521,35 +725,51 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
     );
   }
 
-  Widget _buildDateField({required DateTime? value, required String hint, VoidCallback? onTap, required ColorScheme colorScheme}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: onTap != null ? colorScheme.surfaceContainerLow : const Color(0xFFF3F4F6),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: colorScheme.outline),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                value != null
-                    ? '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}'
-                    : hint,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: value != null ? colorScheme.onSurface : colorScheme.outlineVariant,
-                ),
-              ),
+  Widget _buildDateField({required DateTime? value, required String hint, VoidCallback? onTap, required ColorScheme colorScheme, String? errorText}) {
+    final hasError = errorText != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: onTap != null ? colorScheme.surfaceContainerLow : const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: hasError ? colorScheme.error : colorScheme.outline),
             ),
-            Icon(Icons.calendar_today_outlined, size: 18,
-                color: onTap != null ? colorScheme.onSurfaceVariant : colorScheme.outlineVariant),
-          ],
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    value != null
+                        ? '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}'
+                        : hint,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: value != null ? colorScheme.onSurface : colorScheme.outlineVariant,
+                    ),
+                  ),
+                ),
+                Icon(Icons.calendar_today_outlined, size: 18,
+                    color: onTap != null ? colorScheme.onSurfaceVariant : colorScheme.outlineVariant),
+              ],
+            ),
+          ),
         ),
-      ),
+        if (hasError) ...[
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: Text(
+              errorText,
+              style: TextStyle(fontSize: 12, color: colorScheme.error),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -572,6 +792,77 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
             const DropdownMenuItem(value: null, child: Text('No category')),
             ..._categories.map((c) => DropdownMenuItem(value: c.categoryId, child: Text(c.name))),
           ],
+          style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+          icon: Icon(Icons.keyboard_arrow_down, size: 20, color: colorScheme.onSurfaceVariant),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCountryDropdown({bool enabled = true, required ColorScheme colorScheme}) {
+    final showError = _locationError != null && _selectedCountryId == null;
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: enabled ? colorScheme.surfaceContainerLow : const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: showError ? colorScheme.error : colorScheme.outline),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int?>(
+          value: _countries.any((c) => c.countryId == _selectedCountryId) ? _selectedCountryId : null,
+          hint: Text('Select country', style: TextStyle(color: colorScheme.outlineVariant, fontSize: 14)),
+          isExpanded: true,
+          onChanged: enabled
+              ? (val) async {
+                  setState(() {
+                    _selectedCountryId = val;
+                    _selectedCityId = null;
+                    _cities = [];
+                    _locationError = null;
+                  });
+                  if (val != null) await _loadCities(val);
+                }
+              : null,
+          items: _countries
+              .map((c) => DropdownMenuItem(value: c.countryId, child: Text(c.name)))
+              .toList(),
+          style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+          icon: Icon(Icons.keyboard_arrow_down, size: 20, color: colorScheme.onSurfaceVariant),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCityDropdown({bool enabled = true, required ColorScheme colorScheme}) {
+    final hasCountry = _selectedCountryId != null;
+    final showError = _locationError != null && hasCountry && _selectedCityId == null;
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: enabled && hasCountry ? colorScheme.surfaceContainerLow : const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: showError ? colorScheme.error : colorScheme.outline),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int?>(
+          value: _cities.any((c) => c.cityId == _selectedCityId) ? _selectedCityId : null,
+          hint: Text(
+            hasCountry ? 'Select city' : 'Select country first',
+            style: TextStyle(color: colorScheme.outlineVariant, fontSize: 14),
+          ),
+          isExpanded: true,
+          onChanged: (enabled && hasCountry)
+              ? (val) => setState(() {
+                    _selectedCityId = val;
+                    _locationError = null;
+                  })
+              : null,
+          items: _cities
+              .map((c) => DropdownMenuItem(value: c.cityId, child: Text(c.name)))
+              .toList(),
           style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
           icon: Icon(Icons.keyboard_arrow_down, size: 20, color: colorScheme.onSurfaceVariant),
         ),

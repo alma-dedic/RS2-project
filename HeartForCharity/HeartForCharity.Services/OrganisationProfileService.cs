@@ -33,8 +33,6 @@ namespace HeartForCharity.Services
                          .ThenInclude(c => c.Country);
             if (search.OrganisationTypeId.HasValue)
                 query = query.Where(o => o.OrganisationTypeId == search.OrganisationTypeId);
-            if (search.IsVerified.HasValue)
-                query = query.Where(o => o.IsVerified == search.IsVerified);
             if (!string.IsNullOrWhiteSpace(search.FTS))
                 query = query.Where(o => o.Name.Contains(search.FTS));
             return query;
@@ -53,7 +51,6 @@ namespace HeartForCharity.Services
                 LogoUrl = entity.LogoUrl,
                 OrganisationTypeId = entity.OrganisationTypeId,
                 OrganisationTypeName = entity.OrganisationType?.Name,
-                IsVerified = entity.IsVerified,
                 AddressId = entity.AddressId,
                 CityName = entity.Address?.City?.Name,
                 CountryName = entity.Address?.City?.Country?.Name,
@@ -79,7 +76,6 @@ namespace HeartForCharity.Services
         protected override Task BeforeInsert(OrganisationProfile entity, OrganisationProfileInsertRequest request)
         {
             entity.UserId = _currentUserService.UserId;
-            entity.IsVerified = false;
             entity.CreatedAt = DateTime.UtcNow;
             entity.UpdatedAt = DateTime.UtcNow;
             return Task.CompletedTask;
@@ -92,7 +88,7 @@ namespace HeartForCharity.Services
 
             if (entity.LogoUrl != null
                 && entity.LogoUrl != request.LogoUrl
-                && entity.LogoUrl.Contains("/uploads/"))
+                && entity.LogoUrl.Contains("/api/upload/"))
             {
                 DeleteUploadedFile(entity.LogoUrl);
             }

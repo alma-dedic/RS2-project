@@ -23,6 +23,15 @@
 **/values.dev.yaml
 LICENSE
 README.md
+
+# Flutter UI projects — not needed for backend Docker builds
+UI/
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/*.iml
+
 !**/.gitignore
 !.git/HEAD
 !.git/config

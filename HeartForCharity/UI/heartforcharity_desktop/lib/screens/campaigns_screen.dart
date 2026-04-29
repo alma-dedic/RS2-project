@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:heartforcharity_desktop/model/responses/campaign.dart';
 import 'package:heartforcharity_desktop/model/responses/category.dart';
 import 'package:heartforcharity_desktop/model/search_objects/campaign_search_object.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 import 'package:heartforcharity_desktop/providers/campaign_provider.dart';
 import 'package:heartforcharity_desktop/providers/category_provider.dart';
 import 'package:heartforcharity_desktop/screens/campaign_add_edit_screen.dart';
 import 'package:heartforcharity_desktop/screens/campaign_donations_screen.dart';
+import 'package:heartforcharity_desktop/utils/auth_image.dart';
 import 'package:provider/provider.dart';
 
 class CampaignsScreen extends StatefulWidget {
@@ -50,9 +52,15 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
   Future<void> _loadCategories() async {
     try {
       final provider = context.read<CategoryProvider>();
-      final result = await provider.get(filter: {'retrieveAll': true, 'appliesTo': 'Campaign'});
+      final result = await provider.get(filter: {'pageSize': 100, 'appliesTo': 'Campaign'});
       if (mounted) setState(() => _categories = result.items);
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        );
+      }
+    }
   }
 
   Future<void> _loadCampaigns({bool reset = false}) async {
@@ -92,7 +100,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load campaigns: $e')),
+          SnackBar(content: Text('Failed to load campaigns: ${BaseProvider.cleanError(e)}')),
         );
       }
     } finally {
@@ -111,6 +119,31 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
   }
 
   void _openAddCampaign() async {
+    final categoryProvider = context.read<CategoryProvider>();
+
+    try {
+      final categoriesResult = await categoryProvider.get(
+        filter: {'appliesTo': 'Campaign', 'pageSize': 1},
+      );
+      if (!mounted) return;
+      if (categoriesResult.items.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+            'Cannot create a campaign: no Campaign categories exist. '
+            'Please ask an admin to add a category first.',
+          ),
+        ));
+        return;
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to verify prerequisites: ${BaseProvider.cleanError(e)}')),
+        );
+      }
+      return;
+    }
+
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const CampaignAddEditScreen()),
     );
@@ -373,8 +406,8 @@ class _CampaignCard extends StatelessWidget {
               width: 160,
               height: 120,
               child: coverMedia?.url != null
-                  ? Image.network(
-                      coverMedia!.url!,
+                  ? Image(
+                      image: authNetworkImage(coverMedia!.url!),
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => _imagePlaceholder(colorScheme),
                     )

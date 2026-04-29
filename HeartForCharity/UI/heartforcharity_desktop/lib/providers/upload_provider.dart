@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:heartforcharity_desktop/providers/auth_provider.dart';
-import 'package:heartforcharity_desktop/providers/base_provider.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 
 class UploadProvider with ChangeNotifier {
   Future<String> uploadImage(String filePath) async {

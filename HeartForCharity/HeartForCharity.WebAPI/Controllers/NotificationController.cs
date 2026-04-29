@@ -1,3 +1,4 @@
+using HeartForCharity.Model.Constants;
 using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
 using HeartForCharity.Services;
@@ -8,7 +9,7 @@ namespace HeartForCharity.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "User")]
+    [Authorize(Roles = Roles.User)]
     public class NotificationController : BaseController<NotificationResponse, NotificationSearchObject>
     {
         private readonly INotificationService _notificationService;

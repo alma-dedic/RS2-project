@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:heartforcharity_desktop/model/responses/dashboard_response.dart';
 import 'package:heartforcharity_desktop/providers/dashboard_provider.dart';
 import 'package:heartforcharity_desktop/screens/report_dialog.dart';
+import 'package:heartforcharity_desktop/utils/auth_image.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -264,10 +265,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (d.recentReviews.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: Text('No reviews yet.', style: TextStyle(color: colorScheme.onSurfaceVariant))),
+              child: Text('No reviews yet.', style: TextStyle(color: colorScheme.onSurfaceVariant)),
             )
           else
-            ...d.recentReviews.map((r) => _ReviewTile(review: r)),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: d.recentReviews.map((r) => _ReviewTile(review: r)).toList(),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -358,7 +367,7 @@ class _ReviewTile extends StatelessWidget {
                 radius: 18,
                 backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
                 backgroundImage: review.reviewerAvatarUrl != null && review.reviewerAvatarUrl!.isNotEmpty
-                    ? NetworkImage(review.reviewerAvatarUrl!)
+                    ? authNetworkImage(review.reviewerAvatarUrl!)
                     : null,
                 child: review.reviewerAvatarUrl == null || review.reviewerAvatarUrl!.isEmpty
                     ? Text(review.reviewerName.isNotEmpty ? review.reviewerName[0].toUpperCase() : '?',

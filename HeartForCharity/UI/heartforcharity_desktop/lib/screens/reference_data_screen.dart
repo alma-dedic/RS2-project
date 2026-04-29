@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:heartforcharity_desktop/model/responses/category.dart';
-import 'package:heartforcharity_desktop/model/responses/city.dart';
-import 'package:heartforcharity_desktop/model/responses/country.dart';
+import 'package:heartforcharity_shared/model/responses/city.dart';
+import 'package:heartforcharity_shared/model/responses/country.dart';
 import 'package:heartforcharity_desktop/model/responses/organisation_type.dart';
 import 'package:heartforcharity_desktop/model/responses/skill.dart';
 import 'package:heartforcharity_desktop/providers/category_provider.dart';
-import 'package:heartforcharity_desktop/providers/city_provider.dart';
-import 'package:heartforcharity_desktop/providers/country_provider.dart';
+import 'package:heartforcharity_shared/providers/city_provider.dart';
+import 'package:heartforcharity_shared/providers/country_provider.dart';
 import 'package:heartforcharity_desktop/providers/organisation_type_provider.dart';
 import 'package:heartforcharity_desktop/providers/skill_provider.dart';
 import 'package:provider/provider.dart';
@@ -152,6 +152,8 @@ class _CategoriesTab extends StatefulWidget {
 class _CategoriesTabState extends State<_CategoriesTab> {
   List<Category> _items = [];
   bool _loading = true;
+  final _searchCtrl = TextEditingController();
+  String _query = '';
 
   @override
   void initState() {
@@ -159,12 +161,26 @@ class _CategoriesTabState extends State<_CategoriesTab> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  List<Category> get _filtered {
+    if (_query.isEmpty) return _items;
+    final q = _query.toLowerCase();
+    return _items.where((c) => c.name.toLowerCase().contains(q)).toList();
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
       final result = await context.read<CategoryProvider>().get(filter: {'pageSize': 200});
       if (mounted) setState(() => _items = result.items);
-    } catch (_) {} finally {
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -216,6 +232,14 @@ class _CategoriesTabState extends State<_CategoriesTab> {
                   setS(() => nameError = 'Name is required');
                   return;
                 }
+                if (nameCtrl.text.trim().length < 2) {
+                  setS(() => nameError = 'Min 2 characters');
+                  return;
+                }
+                if (nameCtrl.text.trim().length > 100) {
+                  setS(() => nameError = 'Max 100 characters');
+                  return;
+                }
                 final body = {'name': nameCtrl.text.trim(), 'description': descCtrl.text.trim(), 'appliesTo': appliesTo};
                 try {
                   if (item == null) {
@@ -224,10 +248,15 @@ class _CategoriesTabState extends State<_CategoriesTab> {
                     await context.read<CategoryProvider>().update(item.categoryId, body);
                   }
                   if (ctx.mounted) Navigator.pop(ctx);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(item == null ? 'Category added successfully.' : 'Category updated successfully.')),
+                    );
+                  }
                   _load();
                 } catch (e) {
                   if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString())));
+                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
                   }
                 }
               },
@@ -245,23 +274,35 @@ class _CategoriesTabState extends State<_CategoriesTab> {
     final provider = context.read<CategoryProvider>();
     try {
       await provider.delete(item.categoryId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Category deleted successfully.')),
+        );
+      }
       _load();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final items = _filtered;
     return _RefDataList(
       loading: _loading,
       onAdd: () => _showDialog(),
+      searchBar: _buildSearchBar(
+        controller: _searchCtrl,
+        hint: 'Search by name...',
+        onChanged: (v) => setState(() => _query = v),
+        colorScheme: colorScheme,
+      ),
       child: ListView.builder(
         padding: const EdgeInsets.all(24),
-        itemCount: _items.length,
+        itemCount: items.length,
         itemBuilder: (_, i) {
-          final item = _items[i];
+          final item = items[i];
           return _buildCard(
             colorScheme: colorScheme,
             child: ListTile(
@@ -302,6 +343,8 @@ class _SkillsTab extends StatefulWidget {
 class _SkillsTabState extends State<_SkillsTab> {
   List<Skill> _items = [];
   bool _loading = true;
+  final _searchCtrl = TextEditingController();
+  String _query = '';
 
   @override
   void initState() {
@@ -309,12 +352,26 @@ class _SkillsTabState extends State<_SkillsTab> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  List<Skill> get _filtered {
+    if (_query.isEmpty) return _items;
+    final q = _query.toLowerCase();
+    return _items.where((s) => s.name.toLowerCase().contains(q)).toList();
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
       final result = await context.read<SkillProvider>().get(filter: {'pageSize': 200});
       if (mounted) setState(() => _items = result.items);
-    } catch (_) {} finally {
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -350,6 +407,14 @@ class _SkillsTabState extends State<_SkillsTab> {
                   setS(() => nameError = 'Name is required');
                   return;
                 }
+                if (nameCtrl.text.trim().length < 2) {
+                  setS(() => nameError = 'Min 2 characters');
+                  return;
+                }
+                if (nameCtrl.text.trim().length > 100) {
+                  setS(() => nameError = 'Max 100 characters');
+                  return;
+                }
                 final body = {'name': nameCtrl.text.trim(), 'description': descCtrl.text.trim()};
                 try {
                   if (item == null) {
@@ -358,9 +423,14 @@ class _SkillsTabState extends State<_SkillsTab> {
                     await context.read<SkillProvider>().update(item.skillId, body);
                   }
                   if (ctx.mounted) Navigator.pop(ctx);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(item == null ? 'Skill added successfully.' : 'Skill updated successfully.')),
+                    );
+                  }
                   _load();
                 } catch (e) {
-                  if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString())));
+                  if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
                 }
               },
               child: const Text('Save'),
@@ -377,23 +447,35 @@ class _SkillsTabState extends State<_SkillsTab> {
     final provider = context.read<SkillProvider>();
     try {
       await provider.delete(item.skillId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Skill deleted successfully.')),
+        );
+      }
       _load();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final items = _filtered;
     return _RefDataList(
       loading: _loading,
       onAdd: () => _showDialog(),
+      searchBar: _buildSearchBar(
+        controller: _searchCtrl,
+        hint: 'Search by name...',
+        onChanged: (v) => setState(() => _query = v),
+        colorScheme: colorScheme,
+      ),
       child: ListView.builder(
         padding: const EdgeInsets.all(24),
-        itemCount: _items.length,
+        itemCount: items.length,
         itemBuilder: (_, i) {
-          final item = _items[i];
+          final item = items[i];
           return _buildCard(
             colorScheme: colorScheme,
             child: ListTile(
@@ -426,6 +508,8 @@ class _OrganisationTypesTab extends StatefulWidget {
 class _OrganisationTypesTabState extends State<_OrganisationTypesTab> {
   List<OrganisationType> _items = [];
   bool _loading = true;
+  final _searchCtrl = TextEditingController();
+  String _query = '';
 
   @override
   void initState() {
@@ -433,12 +517,26 @@ class _OrganisationTypesTabState extends State<_OrganisationTypesTab> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  List<OrganisationType> get _filtered {
+    if (_query.isEmpty) return _items;
+    final q = _query.toLowerCase();
+    return _items.where((t) => t.name.toLowerCase().contains(q)).toList();
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
       final result = await context.read<OrganisationTypeProvider>().get(filter: {'pageSize': 200});
       if (mounted) setState(() => _items = result.items);
-    } catch (_) {} finally {
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -474,6 +572,14 @@ class _OrganisationTypesTabState extends State<_OrganisationTypesTab> {
                   setS(() => nameError = 'Name is required');
                   return;
                 }
+                if (nameCtrl.text.trim().length < 2) {
+                  setS(() => nameError = 'Min 2 characters');
+                  return;
+                }
+                if (nameCtrl.text.trim().length > 100) {
+                  setS(() => nameError = 'Max 100 characters');
+                  return;
+                }
                 final body = {'name': nameCtrl.text.trim(), 'description': descCtrl.text.trim()};
                 try {
                   if (item == null) {
@@ -482,9 +588,14 @@ class _OrganisationTypesTabState extends State<_OrganisationTypesTab> {
                     await context.read<OrganisationTypeProvider>().update(item.organisationTypeId, body);
                   }
                   if (ctx.mounted) Navigator.pop(ctx);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(item == null ? 'Organisation type added successfully.' : 'Organisation type updated successfully.')),
+                    );
+                  }
                   _load();
                 } catch (e) {
-                  if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString())));
+                  if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
                 }
               },
               child: const Text('Save'),
@@ -501,23 +612,35 @@ class _OrganisationTypesTabState extends State<_OrganisationTypesTab> {
     final provider = context.read<OrganisationTypeProvider>();
     try {
       await provider.delete(item.organisationTypeId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Organisation type deleted successfully.')),
+        );
+      }
       _load();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final items = _filtered;
     return _RefDataList(
       loading: _loading,
       onAdd: () => _showDialog(),
+      searchBar: _buildSearchBar(
+        controller: _searchCtrl,
+        hint: 'Search by name...',
+        onChanged: (v) => setState(() => _query = v),
+        colorScheme: colorScheme,
+      ),
       child: ListView.builder(
         padding: const EdgeInsets.all(24),
-        itemCount: _items.length,
+        itemCount: items.length,
         itemBuilder: (_, i) {
-          final item = _items[i];
+          final item = items[i];
           return _buildCard(
             colorScheme: colorScheme,
             child: ListTile(
@@ -550,6 +673,8 @@ class _CountriesTab extends StatefulWidget {
 class _CountriesTabState extends State<_CountriesTab> {
   List<Country> _items = [];
   bool _loading = true;
+  final _searchCtrl = TextEditingController();
+  String _query = '';
 
   @override
   void initState() {
@@ -557,12 +682,28 @@ class _CountriesTabState extends State<_CountriesTab> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  List<Country> get _filtered {
+    if (_query.isEmpty) return _items;
+    final q = _query.toLowerCase();
+    return _items.where((c) =>
+        c.name.toLowerCase().contains(q) ||
+        (c.isoCode?.toLowerCase().contains(q) ?? false)).toList();
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
       final result = await context.read<CountryProvider>().get(filter: {'pageSize': 300});
       if (mounted) setState(() => _items = result.items);
-    } catch (_) {} finally {
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -598,6 +739,14 @@ class _CountriesTabState extends State<_CountriesTab> {
                   setS(() => nameError = 'Name is required');
                   return;
                 }
+                if (nameCtrl.text.trim().length < 2) {
+                  setS(() => nameError = 'Min 2 characters');
+                  return;
+                }
+                if (nameCtrl.text.trim().length > 100) {
+                  setS(() => nameError = 'Max 100 characters');
+                  return;
+                }
                 final body = {'name': nameCtrl.text.trim(), 'iSOCode': isoCtrl.text.trim()};
                 try {
                   if (item == null) {
@@ -606,9 +755,14 @@ class _CountriesTabState extends State<_CountriesTab> {
                     await context.read<CountryProvider>().update(item.countryId, body);
                   }
                   if (ctx.mounted) Navigator.pop(ctx);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(item == null ? 'Country added successfully.' : 'Country updated successfully.')),
+                    );
+                  }
                   _load();
                 } catch (e) {
-                  if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString())));
+                  if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
                 }
               },
               child: const Text('Save'),
@@ -625,23 +779,35 @@ class _CountriesTabState extends State<_CountriesTab> {
     final provider = context.read<CountryProvider>();
     try {
       await provider.delete(item.countryId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Country deleted successfully.')),
+        );
+      }
       _load();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final items = _filtered;
     return _RefDataList(
       loading: _loading,
       onAdd: () => _showDialog(),
+      searchBar: _buildSearchBar(
+        controller: _searchCtrl,
+        hint: 'Search by name or ISO code...',
+        onChanged: (v) => setState(() => _query = v),
+        colorScheme: colorScheme,
+      ),
       child: ListView.builder(
         padding: const EdgeInsets.all(24),
-        itemCount: _items.length,
+        itemCount: items.length,
         itemBuilder: (_, i) {
-          final item = _items[i];
+          final item = items[i];
           return _buildCard(
             colorScheme: colorScheme,
             child: ListTile(
@@ -681,6 +847,8 @@ class _CitiesTabState extends State<_CitiesTab> {
   List<City> _items = [];
   List<Country> _countries = [];
   bool _loading = true;
+  final _searchCtrl = TextEditingController();
+  String _query = '';
 
   @override
   void initState() {
@@ -688,20 +856,36 @@ class _CitiesTabState extends State<_CitiesTab> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  List<City> get _filtered {
+    if (_query.isEmpty) return _items;
+    final q = _query.toLowerCase();
+    return _items.where((c) => c.name.toLowerCase().contains(q)).toList();
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
     final cityProvider = context.read<CityProvider>();
     final countryProvider = context.read<CountryProvider>();
     try {
-      final citiesResult = await cityProvider.get(filter: {'pageSize': 500});
-      final countriesResult = await countryProvider.get(filter: {'pageSize': 300});
+      final results = await Future.wait([
+        cityProvider.get(filter: {'pageSize': 500}),
+        countryProvider.get(filter: {'pageSize': 300}),
+      ]);
       if (mounted) {
         setState(() {
-          _items = citiesResult.items;
-          _countries = countriesResult.items;
+          _items = List<City>.from(results[0].items);
+          _countries = List<Country>.from(results[1].items);
         });
       }
-    } catch (_) {} finally {
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -751,6 +935,14 @@ class _CitiesTabState extends State<_CitiesTab> {
                   setS(() => nameError = 'Name is required');
                   return;
                 }
+                if (nameCtrl.text.trim().length < 2) {
+                  setS(() => nameError = 'Min 2 characters');
+                  return;
+                }
+                if (nameCtrl.text.trim().length > 100) {
+                  setS(() => nameError = 'Max 100 characters');
+                  return;
+                }
                 if (selectedCountryId == null) {
                   ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Please select a country')));
                   return;
@@ -764,9 +956,14 @@ class _CitiesTabState extends State<_CitiesTab> {
                     await cityProvider.update(item.cityId, body);
                   }
                   if (ctx.mounted) Navigator.pop(ctx);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(item == null ? 'City added successfully.' : 'City updated successfully.')),
+                    );
+                  }
                   _load();
                 } catch (e) {
-                  if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString())));
+                  if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
                 }
               },
               child: const Text('Save'),
@@ -782,23 +979,35 @@ class _CitiesTabState extends State<_CitiesTab> {
     if (ok != true || !mounted) return;
     try {
       await context.read<CityProvider>().delete(item.cityId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('City deleted successfully.')),
+        );
+      }
       _load();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final items = _filtered;
     return _RefDataList(
       loading: _loading,
       onAdd: () => _showDialog(),
+      searchBar: _buildSearchBar(
+        controller: _searchCtrl,
+        hint: 'Search by name...',
+        onChanged: (v) => setState(() => _query = v),
+        colorScheme: colorScheme,
+      ),
       child: ListView.builder(
         padding: const EdgeInsets.all(24),
-        itemCount: _items.length,
+        itemCount: items.length,
         itemBuilder: (_, i) {
-          final item = _items[i];
+          final item = items[i];
           return _buildCard(
             colorScheme: colorScheme,
             child: ListTile(
@@ -827,17 +1036,27 @@ class _RefDataList extends StatelessWidget {
   final bool loading;
   final VoidCallback onAdd;
   final Widget child;
+  final Widget? searchBar;
 
-  const _RefDataList({required this.loading, required this.onAdd, required this.child});
+  const _RefDataList({required this.loading, required this.onAdd, required this.child, this.searchBar});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final body = loading
+        ? const Center(child: CircularProgressIndicator())
+        : searchBar == null
+            ? child
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  searchBar!,
+                  Expanded(child: child),
+                ],
+              );
     return Stack(
       children: [
-        loading
-            ? const Center(child: CircularProgressIndicator())
-            : child,
+        body,
         Positioned(
           right: 24,
           bottom: 24,
@@ -852,3 +1071,37 @@ class _RefDataList extends StatelessWidget {
     );
   }
 }
+
+Widget _buildSearchBar({
+  required TextEditingController controller,
+  required String hint,
+  required ValueChanged<String> onChanged,
+  required ColorScheme colorScheme,
+}) =>
+    Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 80, 0),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          hintText: hint,
+          prefixIcon: Icon(Icons.search, size: 18, color: colorScheme.onSurfaceVariant),
+          isDense: true,
+          filled: true,
+          fillColor: colorScheme.surface,
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: colorScheme.outline),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: colorScheme.outline),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+          ),
+        ),
+      ),
+    );

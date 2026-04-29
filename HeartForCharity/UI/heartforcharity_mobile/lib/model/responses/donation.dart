@@ -8,6 +8,7 @@ class Donation {
   final bool isAnonymous;
   final String? payPalTransactionId;
   final String? status;
+  final bool isPaid;
   final DateTime? donationDateTime;
 
   Donation({
@@ -20,6 +21,7 @@ class Donation {
     this.isAnonymous = false,
     this.payPalTransactionId,
     this.status,
+    this.isPaid = false,
     this.donationDateTime,
   });
 
@@ -33,6 +35,7 @@ class Donation {
         isAnonymous: json['isAnonymous'] ?? false,
         payPalTransactionId: json['payPalTransactionId'],
         status: json['status'],
+        isPaid: json['isPaid'] as bool? ?? false,
         donationDateTime: json['donationDateTime'] != null
             ? DateTime.parse(json['donationDateTime'])
             : null,
