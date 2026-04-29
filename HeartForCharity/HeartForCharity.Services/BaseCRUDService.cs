@@ -26,7 +26,7 @@ namespace HeartForCharity.Services
             MapInsertToEntity(entity, request);
             _context.Set<TEntity>().Add(entity);
 
-            await BeforeInsert(entity, request); //dodatne validacije
+            await BeforeInsert(entity, request); 
 
             await _context.SaveChangesAsync();
             return MapToResponse(entity);
@@ -49,7 +49,7 @@ namespace HeartForCharity.Services
             if (entity == null)
                 return null;
 
-            await BeforeUpdate(entity, request); //dodatne validacije 
+            await BeforeUpdate(entity, request); 
 
             MapUpdateToEntity(entity, request);
 
@@ -67,7 +67,7 @@ namespace HeartForCharity.Services
             _mapper.Map(request, entity);
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public virtual async Task<bool> DeleteAsync(int id)
         {
             var entity = await _context.Set<TEntity>().FindAsync(id);
             if (entity == null)

@@ -1,5 +1,5 @@
 import 'package:heartforcharity_desktop/model/responses/category.dart';
-import 'package:heartforcharity_desktop/providers/base_provider.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 
 class CategoryProvider extends BaseProvider<Category> {
   CategoryProvider() : super('category');

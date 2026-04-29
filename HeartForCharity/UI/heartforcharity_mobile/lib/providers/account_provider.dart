@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:heartforcharity_mobile/providers/auth_provider.dart';
-import 'package:heartforcharity_mobile/providers/base_provider.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 
 class AccountProvider with ChangeNotifier {
   Map<String, String> get _headers => {

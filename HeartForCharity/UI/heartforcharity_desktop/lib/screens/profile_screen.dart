@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:heartforcharity_desktop/utils/auth_image.dart';
 import 'package:heartforcharity_desktop/model/responses/organisation_profile.dart';
 import 'package:heartforcharity_desktop/providers/auth_provider.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 import 'package:heartforcharity_desktop/providers/organisation_profile_provider.dart';
 import 'package:heartforcharity_desktop/providers/upload_provider.dart';
 import 'package:heartforcharity_desktop/screens/login_screen.dart';
@@ -23,6 +25,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   bool _isEditing = false;
   bool _isSaving = false;
+  String? _nameError;
+  String? _emailError;
+  String? _phoneError;
 
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
@@ -54,7 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load profile: $e')),
+          SnackBar(content: Text('Failed to load profile: ${BaseProvider.cleanError(e)}')),
         );
       }
     } finally {
@@ -71,7 +76,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isEditing = true);
   }
 
-  void _cancelEditing() => setState(() => _isEditing = false);
+  void _cancelEditing() => setState(() {
+        _isEditing = false;
+        _nameError = null;
+        _emailError = null;
+        _phoneError = null;
+      });
 
   Future<void> _pickLogo() async {
     final result = await FilePicker.platform.pickFiles(
@@ -84,12 +94,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _save() async {
-    if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Organisation name is required.')),
-      );
-      return;
-    }
+    final nameVal = _nameController.text.trim();
+    final emailVal = _emailController.text.trim();
+    final phoneVal = _phoneController.text.trim();
+    final nameErr = nameVal.isEmpty
+        ? 'Organisation name is required.'
+        : nameVal.length > 200 ? 'Max 200 characters.' : null;
+    final emailErr = emailVal.isNotEmpty &&
+            !RegExp(r'^[\w\-.]+@([\w-]+\.)+[\w-]{2,}$').hasMatch(emailVal)
+        ? 'Enter a valid email address (e.g. info@org.com).'
+        : null;
+    final phoneErr = phoneVal.isNotEmpty &&
+            !RegExp(r'^[+\d\s\-()]{6,20}$').hasMatch(phoneVal)
+        ? 'Enter a valid phone number (e.g. +387 33 123 456).'
+        : null;
+    setState(() {
+      _nameError = nameErr;
+      _emailError = emailErr;
+      _phoneError = phoneErr;
+    });
+    if (nameErr != null || emailErr != null || phoneErr != null) return;
 
     setState(() => _isSaving = true);
 
@@ -126,7 +150,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
+          SnackBar(content: Text(BaseProvider.cleanError(e))),
         );
       }
     } finally {
@@ -198,7 +222,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onToggle: () => setDialogState(() => obscureCurrent = !obscureCurrent),
                     onChanged: (_) => setDialogState(() {
                       currentError = null;
-                      newError = validateNew(newCtrl.text);
+                      if (newCtrl.text.isNotEmpty) {
+                        newError = validateNew(newCtrl.text);
+                      }
                     }),
                   ),
                   const SizedBox(height: 14),
@@ -373,7 +399,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 try {
                                   await context.read<AuthProvider>().deleteAccount();
                                   if (mounted) {
-                                    Navigator.of(context).pushAndRemoveUntil(
+                                    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
                                       MaterialPageRoute(builder: (_) => const LoginScreen()),
                                       (_) => false,
                                     );
@@ -381,7 +407,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 } catch (e) {
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('$e')),
+                                      SnackBar(content: Text(BaseProvider.cleanError(e))),
                                     );
                                   }
                                 }
@@ -464,26 +490,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (_isEditing)
                       TextField(
                         controller: _nameController,
+                        onChanged: (_) => setState(() => _nameError = null),
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: colorScheme.onSurface),
-                        decoration: _fieldDecoration('Organisation name', colorScheme),
+                        decoration: _fieldDecoration('Organisation name', colorScheme, errorText: _nameError),
                       )
                     else
                       Text(
                         _profile!.name,
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: colorScheme.onSurface),
                       ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        if (_profile!.organisationTypeName != null)
-                          Text(
-                            _profile!.organisationTypeName!,
-                            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
-                          ),
-                        if (_profile!.organisationTypeName != null) const SizedBox(width: 12),
-                        _VerifiedBadge(isVerified: _profile!.isVerified),
-                      ],
-                    ),
+                    if (_profile!.organisationTypeName != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        _profile!.organisationTypeName!,
+                        style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -530,7 +552,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextField(
               controller: _descController,
               maxLines: 4,
-              maxLength: 1000,
+              maxLength: 2000,
               style: const TextStyle(fontSize: 13),
               decoration: _fieldDecoration('Describe your organisation...', colorScheme),
             ),
@@ -542,16 +564,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Expanded(
                   child: TextField(
                     controller: _emailController,
+                    onChanged: (_) => setState(() => _emailError = null),
                     style: const TextStyle(fontSize: 13),
-                    decoration: _fieldDecoration('Contact email', colorScheme).copyWith(prefixIcon: Icon(Icons.email_outlined, size: 18, color: colorScheme.onSurfaceVariant)),
+                    decoration: _fieldDecoration('Contact email', colorScheme, errorText: _emailError).copyWith(prefixIcon: Icon(Icons.email_outlined, size: 18, color: colorScheme.onSurfaceVariant)),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: TextField(
                     controller: _phoneController,
+                    onChanged: (_) => setState(() => _phoneError = null),
                     style: const TextStyle(fontSize: 13),
-                    decoration: _fieldDecoration('Contact phone', colorScheme).copyWith(prefixIcon: Icon(Icons.phone_outlined, size: 18, color: colorScheme.onSurfaceVariant)),
+                    decoration: _fieldDecoration('Contact phone', colorScheme, errorText: _phoneError).copyWith(prefixIcon: Icon(Icons.phone_outlined, size: 18, color: colorScheme.onSurfaceVariant)),
                   ),
                 ),
               ],
@@ -591,7 +615,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (_isEditing && _localLogoPath != null) {
       inner = Image.file(File(_localLogoPath!), fit: BoxFit.cover, errorBuilder: (_, e, s) => _logoPlaceholder());
     } else if (_profile?.logoUrl != null && _profile!.logoUrl!.isNotEmpty) {
-      inner = Image.network(_profile!.logoUrl!, fit: BoxFit.cover, errorBuilder: (_, e, s) => _logoPlaceholder());
+      inner = Image(image: authNetworkImage(_profile!.logoUrl!), fit: BoxFit.cover, errorBuilder: (_, _, _) => _logoPlaceholder());
     } else {
       inner = _logoPlaceholder();
     }
@@ -711,15 +735,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       );
 
-  InputDecoration _fieldDecoration(String hint, ColorScheme colorScheme) => InputDecoration(
+  InputDecoration _fieldDecoration(String hint, ColorScheme colorScheme, {String? errorText}) => InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+        errorText: errorText,
         filled: true,
         fillColor: colorScheme.surfaceContainerLow,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.outline)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.outline)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.primary, width: 1.5)),
+        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.error)),
+        focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: colorScheme.error, width: 1.5)),
       );
 
   ButtonStyle _outlinedStyle(ColorScheme colorScheme) => OutlinedButton.styleFrom(
@@ -755,27 +782,6 @@ class _InfoRow extends StatelessWidget {
           Text(value, style: TextStyle(fontSize: 13, color: colorScheme.onSurface)),
         ],
       ),
-    );
-  }
-}
-
-class _VerifiedBadge extends StatelessWidget {
-  final bool isVerified;
-  const _VerifiedBadge({required this.isVerified});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final color = isVerified ? colorScheme.secondary : colorScheme.onSurfaceVariant;
-    final icon = isVerified ? Icons.verified_outlined : Icons.pending_outlined;
-    final label = isVerified ? 'Verified' : 'Pending verification';
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500)),
-      ],
     );
   }
 }

@@ -14,6 +14,7 @@ namespace HeartForCharity.Model.Responses
         public string OrganisationName { get; set; } = null!;
         public int UserProfileId { get; set; }
         public string ReviewerName { get; set; } = null!;
+        public string? ReviewerAvatarUrl { get; set; }
         public int Rating { get; set; }
         public string? Comment { get; set; }
         public DateTime CreatedAt { get; set; }

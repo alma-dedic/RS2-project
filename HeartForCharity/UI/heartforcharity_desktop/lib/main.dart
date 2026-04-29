@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:heartforcharity_desktop/providers/app_session_handler.dart';
 import 'package:heartforcharity_desktop/providers/auth_provider.dart';
 import 'package:heartforcharity_desktop/providers/campaign_provider.dart';
 import 'package:heartforcharity_desktop/providers/category_provider.dart';
@@ -7,16 +8,17 @@ import 'package:heartforcharity_desktop/providers/volunteer_job_provider.dart';
 import 'package:heartforcharity_desktop/providers/organisation_profile_provider.dart';
 import 'package:heartforcharity_desktop/providers/donation_provider.dart';
 import 'package:heartforcharity_desktop/providers/volunteer_application_provider.dart';
-import 'package:heartforcharity_desktop/providers/review_provider.dart';
+import 'package:heartforcharity_shared/providers/review_provider.dart';
 import 'package:heartforcharity_desktop/providers/campaign_media_provider.dart';
 import 'package:heartforcharity_desktop/providers/upload_provider.dart';
-import 'package:heartforcharity_desktop/providers/city_provider.dart';
-import 'package:heartforcharity_desktop/providers/country_provider.dart';
+import 'package:heartforcharity_shared/providers/city_provider.dart';
+import 'package:heartforcharity_shared/providers/country_provider.dart';
 import 'package:heartforcharity_desktop/providers/dashboard_provider.dart';
 import 'package:heartforcharity_desktop/providers/organisation_type_provider.dart';
 import 'package:heartforcharity_desktop/providers/report_provider.dart';
 import 'package:heartforcharity_desktop/providers/skill_provider.dart';
 import 'package:heartforcharity_desktop/providers/user_admin_provider.dart';
+import 'package:heartforcharity_shared/providers/address_provider.dart';
 import 'package:heartforcharity_desktop/screens/admin_shell.dart';
 import 'package:heartforcharity_desktop/screens/login_screen.dart';
 import 'package:heartforcharity_desktop/screens/main_shell.dart';
@@ -25,6 +27,7 @@ import 'package:provider/provider.dart';
 final navigatorKey = GlobalKey<NavigatorState>();
 
 void main() {
+  registerAppSessionHandler();
   runApp(const MyApp());
 }
 
@@ -45,13 +48,14 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ReviewProvider()),
         ChangeNotifierProvider(create: (_) => CampaignMediaProvider()),
         ChangeNotifierProvider(create: (_) => UploadProvider()),
-        Provider(create: (_) => DashboardProvider()),
-        Provider(create: (_) => ReportProvider()),
+        ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        ChangeNotifierProvider(create: (_) => ReportProvider()),
         ChangeNotifierProvider(create: (_) => SkillProvider()),
         ChangeNotifierProvider(create: (_) => OrganisationTypeProvider()),
         ChangeNotifierProvider(create: (_) => CountryProvider()),
         ChangeNotifierProvider(create: (_) => CityProvider()),
         ChangeNotifierProvider(create: (_) => UserAdminProvider()),
+        ChangeNotifierProvider(create: (_) => AddressProvider()),
       ],
       child: MaterialApp(
         title: 'HeartForCharity',

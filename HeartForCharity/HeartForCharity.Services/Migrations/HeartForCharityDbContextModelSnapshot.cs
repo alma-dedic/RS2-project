@@ -335,9 +335,6 @@ namespace HeartForCharity.Services.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
-                    b.Property<bool>("IsVerified")
-                        .HasColumnType("bit");
-
                     b.Property<string>("LogoUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -651,15 +648,15 @@ namespace HeartForCharity.Services.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("ResumeUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<DateTime?>("ReviewedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<int?>("ReviewedByUserId")
                         .HasColumnType("int");
-
-                    b.Property<string>("ResumeUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -681,7 +678,8 @@ namespace HeartForCharity.Services.Migrations
 
                     b.HasIndex("UserProfileId");
 
-                    b.HasIndex("VolunteerJobId", "UserProfileId");
+                    b.HasIndex("VolunteerJobId", "UserProfileId")
+                        .IsUnique();
 
                     b.ToTable("VolunteerApplications");
                 });
@@ -725,10 +723,6 @@ namespace HeartForCharity.Services.Migrations
                     b.Property<int>("PositionsFilled")
                         .HasColumnType("int");
 
-                    b.Property<string>("Requirements")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");
 
@@ -754,6 +748,30 @@ namespace HeartForCharity.Services.Migrations
                     b.HasIndex("Status");
 
                     b.ToTable("VolunteerJobs");
+                });
+
+            modelBuilder.Entity("HeartForCharity.Services.Database.VolunteerJobSkill", b =>
+                {
+                    b.Property<int>("VolunteerJobSkillId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VolunteerJobSkillId"));
+
+                    b.Property<int>("SkillId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VolunteerJobId")
+                        .HasColumnType("int");
+
+                    b.HasKey("VolunteerJobSkillId");
+
+                    b.HasIndex("SkillId");
+
+                    b.HasIndex("VolunteerJobId", "SkillId")
+                        .IsUnique();
+
+                    b.ToTable("VolunteerJobSkills");
                 });
 
             modelBuilder.Entity("HeartForCharity.Services.Database.VolunteerSkill", b =>
@@ -962,8 +980,7 @@ namespace HeartForCharity.Services.Migrations
                 {
                     b.HasOne("HeartForCharity.Services.Database.User", "ReviewedByUser")
                         .WithMany()
-                        .HasForeignKey("ReviewedByUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("ReviewedByUserId");
 
                     b.HasOne("HeartForCharity.Services.Database.UserProfile", "UserProfile")
                         .WithMany("VolunteerApplications")
@@ -1005,6 +1022,25 @@ namespace HeartForCharity.Services.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("OrganisationProfile");
+                });
+
+            modelBuilder.Entity("HeartForCharity.Services.Database.VolunteerJobSkill", b =>
+                {
+                    b.HasOne("HeartForCharity.Services.Database.Skill", "Skill")
+                        .WithMany()
+                        .HasForeignKey("SkillId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HeartForCharity.Services.Database.VolunteerJob", "VolunteerJob")
+                        .WithMany("VolunteerJobSkills")
+                        .HasForeignKey("VolunteerJobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Skill");
+
+                    b.Navigation("VolunteerJob");
                 });
 
             modelBuilder.Entity("HeartForCharity.Services.Database.VolunteerSkill", b =>
@@ -1110,6 +1146,8 @@ namespace HeartForCharity.Services.Migrations
             modelBuilder.Entity("HeartForCharity.Services.Database.VolunteerJob", b =>
                 {
                     b.Navigation("VolunteerApplications");
+
+                    b.Navigation("VolunteerJobSkills");
                 });
 #pragma warning restore 612, 618
         }

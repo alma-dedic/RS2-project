@@ -4,6 +4,7 @@ class Donation {
   final String? campaignTitle;
   final int? userProfileId;
   final String? donorName;
+  final String? donorAvatarUrl;
   final double amount;
   final bool isAnonymous;
   final String? payPalTransactionId;
@@ -16,6 +17,7 @@ class Donation {
     this.campaignTitle,
     this.userProfileId,
     this.donorName,
+    this.donorAvatarUrl,
     this.amount = 0,
     this.isAnonymous = false,
     this.payPalTransactionId,
@@ -29,6 +31,7 @@ class Donation {
         campaignTitle: json['campaignTitle'],
         userProfileId: json['userProfileId'],
         donorName: json['donorName'],
+        donorAvatarUrl: json['donorAvatarUrl'],
         amount: (json['amount'] as num?)?.toDouble() ?? 0,
         isAnonymous: json['isAnonymous'] ?? false,
         payPalTransactionId: json['payPalTransactionId'],
@@ -44,6 +47,7 @@ class Donation {
         'campaignTitle': campaignTitle,
         'userProfileId': userProfileId,
         'donorName': donorName,
+        'donorAvatarUrl': donorAvatarUrl,
         'amount': amount,
         'isAnonymous': isAnonymous,
         'payPalTransactionId': payPalTransactionId,

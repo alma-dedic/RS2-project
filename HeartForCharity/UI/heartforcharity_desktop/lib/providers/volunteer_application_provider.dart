@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:heartforcharity_desktop/model/responses/volunteer_application.dart';
-import 'package:heartforcharity_desktop/providers/base_provider.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 
 class VolunteerApplicationProvider extends BaseProvider<VolunteerApplication> {
   VolunteerApplicationProvider() : super('volunteerapplication');
@@ -26,7 +26,7 @@ class VolunteerApplicationProvider extends BaseProvider<VolunteerApplication> {
     var response = await http.patch(
       uri,
       headers: createHeaders(),
-      body: reason != null ? jsonEncode({'rejectionReason': reason}) : null,
+      body: jsonEncode({'rejectionReason': reason}),
     );
 
     if (isValidResponse(response)) {

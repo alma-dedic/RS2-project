@@ -1,3 +1,4 @@
+using HeartForCharity.Model.Constants;
 using HeartForCharity.Model.Requests;
 using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
@@ -13,27 +14,27 @@ namespace HeartForCharity.WebAPI.Controllers
     {
         public ReviewController(IReviewService service) : base(service) { }
 
-        [AllowAnonymous]
+        [Authorize]
         [HttpGet("")]
         public override async Task<HeartForCharity.Model.Responses.PagedResult<ReviewResponse>> Get([FromQuery] ReviewSearchObject? search = null)
             => await base.Get(search);
 
-        [AllowAnonymous]
+        [Authorize]
         [HttpGet("{id}")]
         public override async Task<ReviewResponse?> GetById(int id)
             => await base.GetById(id);
 
-        [Authorize(Roles = "User")]
+        [Authorize(Roles = Roles.User)]
         [HttpPost]
         public override async Task<ReviewResponse> Create([FromBody] ReviewInsertRequest request)
             => await base.Create(request);
 
-        [Authorize(Roles = "User")]
+        [Authorize(Roles = Roles.User)]
         [HttpPut("{id}")]
         public override async Task<ReviewResponse?> Update(int id, [FromBody] ReviewInsertRequest request)
             => await base.Update(id, request);
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         [HttpDelete("{id}")]
         public override async Task<bool> Delete(int id)
             => await base.Delete(id);

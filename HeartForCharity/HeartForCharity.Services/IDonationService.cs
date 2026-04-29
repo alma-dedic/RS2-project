@@ -10,5 +10,6 @@ namespace HeartForCharity.Services
         Task<DonationCreateOrderResponse> CreateOrderAsync(DonationCreateOrderRequest request, string paypalOrderId, string approvalUrl);
         Task<DonationResponse> CaptureAsync(string paypalOrderId, string captureStatus, string? transactionId);
         Task<PagedResult<DonationResponse>> GetMyAsync(DonationSearchObject search);
+        Task<PagedResult<DonationResponse>> GetByCampaignAsync(int campaignId);
     }
 }

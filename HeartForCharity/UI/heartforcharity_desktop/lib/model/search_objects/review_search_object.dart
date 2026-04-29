@@ -11,7 +11,6 @@ class ReviewSearchObject extends BaseSearchObject {
     super.page,
     super.pageSize,
     super.includeTotalCount,
-    super.retrieveAll,
     this.organisationProfileId,
     this.userProfileId,
     this.minRating,

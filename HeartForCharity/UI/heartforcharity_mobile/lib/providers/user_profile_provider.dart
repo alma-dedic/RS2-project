@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:heartforcharity_mobile/model/responses/user_profile.dart';
-import 'package:heartforcharity_mobile/providers/base_provider.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 
 class UserProfileProvider extends BaseProvider<UserProfile> {
   UserProfileProvider() : super('userprofile');

@@ -1,5 +1,5 @@
 import 'package:heartforcharity_desktop/model/responses/donation.dart';
-import 'package:heartforcharity_desktop/providers/base_provider.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 
 class DonationProvider extends BaseProvider<Donation> {
   DonationProvider() : super('donation');

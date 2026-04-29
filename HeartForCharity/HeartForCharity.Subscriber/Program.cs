@@ -6,10 +6,16 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
+DotNetEnv.Env.TraversePath().Load();
+
 var builder = Host.CreateApplicationBuilder(args);
+builder.Configuration.AddEnvironmentVariables();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Server=localhost;Database=210002;Trusted_Connection=True;TrustServerCertificate=True";
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+
+var rabbitConnection = builder.Configuration["RabbitMQ:Connection"]
+    ?? throw new InvalidOperationException("'RabbitMQ:Connection' is not configured.");
 
 builder.Services.AddHeartForCharityDatabase(connectionString);
 builder.Services.AddScoped<ApplicationApprovedConsumer>();
@@ -18,7 +24,7 @@ builder.Services.AddScoped<ApplicationRejectedConsumer>();
 var host = builder.Build();
 var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("HeartForCharity.Subscriber");
 
-var bus = RabbitHutch.CreateBus("host=localhost;username=guest;password=guest");
+using var bus = RabbitHutch.CreateBus(rabbitConnection);
 
 logger.LogInformation("Subscriber started. Listening for messages...");
 
@@ -48,7 +54,6 @@ await bus.PubSub.SubscribeAsync<ApplicationRejectedEvent>(
 
 await host.RunAsync();
 
-bus.Dispose();
 
 static async Task ExecuteWithRetryAsync(Func<Task> action, ILogger logger, string eventName, int messageId)
 {

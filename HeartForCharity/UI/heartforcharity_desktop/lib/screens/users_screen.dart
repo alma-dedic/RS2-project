@@ -38,7 +38,9 @@ class _UsersScreenState extends State<UsersScreen> {
       if (_activeFilter != null) filter['isActive'] = _activeFilter!;
       final result = await context.read<UserAdminProvider>().get(filter: filter);
       if (mounted) setState(() => _users = result.items);
-    } catch (_) {} finally {
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -52,9 +54,14 @@ class _UsersScreenState extends State<UsersScreen> {
   Future<void> _toggleActive(UserResponse user) async {
     try {
       await context.read<UserAdminProvider>().toggleActive(user.userId, user);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(user.isActive ? 'User deactivated successfully.' : 'User activated successfully.')),
+        );
+      }
       _load();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
     }
   }
 

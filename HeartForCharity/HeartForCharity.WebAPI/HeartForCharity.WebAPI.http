@@ -1,6 +1,3 @@
 @HeartForCharity.WebAPI_HostAddress = http://localhost:5145
 
-GET {{HeartForCharity.WebAPI_HostAddress}}/weatherforecast/
-Accept: application/json
-
 ###

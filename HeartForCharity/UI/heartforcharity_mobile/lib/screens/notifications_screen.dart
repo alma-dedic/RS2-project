@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:heartforcharity_mobile/model/responses/notification.dart';
 import 'package:heartforcharity_mobile/providers/notification_provider.dart';
@@ -15,11 +16,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   List<AppNotification> _items = [];
   bool _loading = true;
   bool _markingAll = false;
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _silentRefresh());
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _silentRefresh() async {
+    if (!mounted) return;
+    final provider = context.read<NotificationProvider>();
+    try {
+      final result = await provider.get(filter: {'pageSize': 100});
+      if (mounted) setState(() => _items = result.items);
+    } catch (_) {}
   }
 
   Future<void> _load() async {
@@ -28,10 +46,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     try {
       final result = await provider.get(filter: {'pageSize': 100});
       setState(() => _items = result.items);
-    } catch (_) {
-      setState(() => _items = []);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _items = []);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+      }
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -41,7 +62,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     try {
       await provider.markAsRead(notification.notificationId);
       setState(() => notification.isRead = true);
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    }
   }
 
   Future<void> _markAllAsRead() async {
@@ -57,6 +80,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           n.isRead = true;
         }
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('All notifications marked as read.')),
+        );
+      }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -76,9 +104,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerHighest,
       appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Text('Notifications', style: TextStyle(fontWeight: FontWeight.w700)),
             if (!_loading && unreadCount > 0) ...[
@@ -86,15 +113,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   '$unreadCount',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colorScheme.primary,
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -109,11 +136,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     child: SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     ),
                   )
                 : TextButton(
                     onPressed: _markAllAsRead,
+                    style: TextButton.styleFrom(foregroundColor: Colors.white),
                     child: const Text('Mark all read'),
                   ),
         ],

@@ -67,10 +67,12 @@ namespace HeartForCharity.Services
                     : entity.UserProfile != null
                         ? $"{entity.UserProfile.FirstName} {entity.UserProfile.LastName}"
                         : null,
+                DonorAvatarUrl = entity.IsAnonymous ? null : entity.UserProfile?.ProfilePictureUrl,
                 Amount = entity.Amount,
                 IsAnonymous = entity.IsAnonymous,
                 PayPalTransactionId = entity.PayPalTransactionId,
                 Status = entity.Status.ToString(),
+                IsPaid = entity.Status == DonationStatus.Success,
                 DonationDateTime = entity.DonationDateTime
             };
         }
@@ -95,6 +97,18 @@ namespace HeartForCharity.Services
             entity.Status = DonationStatus.Pending;
             entity.DonationDateTime = DateTime.UtcNow;
             entity.CreatedAt = DateTime.UtcNow;
+        }
+
+        public async Task<PagedResult<DonationResponse>> GetByCampaignAsync(int campaignId)
+        {
+            return await GetAsync(new DonationSearchObject
+            {
+                CampaignId = campaignId,
+                Status = "Success",
+                PageSize = 20,
+                OrderBy = "date",
+                OrderDescending = true
+            });
         }
 
         public async Task<PagedResult<DonationResponse>> GetMyAsync(DonationSearchObject search)
@@ -128,7 +142,7 @@ namespace HeartForCharity.Services
             var donation = new Donation
             {
                 CampaignId    = request.CampaignId,
-                UserProfileId = request.IsAnonymous ? null : userProfile.UserProfileId,
+                UserProfileId = userProfile.UserProfileId,
                 Amount        = request.Amount,
                 IsAnonymous   = request.IsAnonymous,
                 PayPalOrderId = paypalOrderId,
@@ -156,6 +170,9 @@ namespace HeartForCharity.Services
 
             if (donation == null)
                 throw new UserException("Donation order not found.");
+
+            if (donation.Status == DonationStatus.Success)
+                return MapToResponse(donation);
 
             if (captureStatus == "COMPLETED")
             {

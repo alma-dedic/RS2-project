@@ -16,9 +16,12 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Threading.RateLimiting;
 
-var builder = WebApplication.CreateBuilder(args);
+DotNetEnv.Env.Load();
 
-// Referentni podaci
+var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddEnvironmentVariables();
+
+
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ISkillService, SkillService>();
 builder.Services.AddScoped<ICountryService, CountryService>();
@@ -26,14 +29,11 @@ builder.Services.AddScoped<ICityService, CityService>();
 builder.Services.AddScoped<IOrganisationTypeService, OrganisationTypeService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 
-// Korisnici
 builder.Services.AddScoped<IUserService, UserService>();
 
-// Profili
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IOrganisationProfileService, OrganisationProfileService>();
 
-// Glavni entiteti
 builder.Services.AddScoped<ICampaignService, CampaignService>();
 builder.Services.AddScoped<ICampaignMediaService, CampaignMediaService>();
 builder.Services.AddScoped<IVolunteerJobService, VolunteerJobService>();
@@ -44,31 +44,28 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IRecommenderService, RecommenderService>();
 
-// Volunteer application state machine
 builder.Services.AddScoped<BaseApplicationState>();
 builder.Services.AddScoped<PendingApplicationState>();
 builder.Services.AddScoped<ApprovedApplicationState>();
 builder.Services.AddScoped<RejectedApplicationState>();
 builder.Services.AddScoped<WithdrawnApplicationState>();
 
-// Campaign state machine
 builder.Services.AddScoped<BaseCampaignState>();
 builder.Services.AddScoped<ActiveCampaignState>();
 builder.Services.AddScoped<CompletedCampaignState>();
 builder.Services.AddScoped<CancelledCampaignState>();
 
-// Volunteer job state machine
 builder.Services.AddScoped<BaseVolunteerJobState>();
 builder.Services.AddScoped<ActiveVolunteerJobState>();
 builder.Services.AddScoped<CompletedVolunteerJobState>();
 builder.Services.AddScoped<CancelledVolunteerJobState>();
 
-builder.Services.RegisterEasyNetQ("host=localhost;username=guest;password=guest");
+builder.Services.RegisterEasyNetQ(builder.Configuration["RabbitMQ:Connection"]!);
 
 builder.Services.AddRateLimiter(options =>
 {
-    // Max 5 login attempts per minute per IP
     options.AddFixedWindowLimiter("login", opt =>
     {
         opt.PermitLimit = 5;
@@ -88,13 +85,28 @@ builder.Services.AddSingleton<IPayPalService, PayPalService>();
 builder.Services.AddMapster();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Server=localhost;Database=210002;Trusted_Connection=True;TrustServerCertificate=True";
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
 
 builder.Services.AddHeartForCharityDatabase(connectionString);
 
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 var jwtIssuer = builder.Configuration["Jwt:Issuer"]!;
 var jwtAudience = builder.Configuration["Jwt:Audience"]!;
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins(
+                  "http://localhost:8080",   // Flutter web
+                  "http://localhost:3000",   // desktop dev
+                  "http://localhost:5145",   // local API (same-origin Swagger)
+                  "http://10.0.2.2:5145"    // Android emulator → host
+              )
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -162,15 +174,24 @@ using (var scope = app.Services.CreateScope())
     await DatabaseSeeder.SeedAsync(dataContext);
 }
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+// Block direct access to /uploads/ — files are served through /api/upload/{fileName} with [Authorize]
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/uploads"))
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        await context.Response.WriteAsync("Unauthorized. Use /api/upload/{fileName} to access files.");
+        return;
+    }
+    await next();
+});
+
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();

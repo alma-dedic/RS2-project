@@ -28,6 +28,11 @@ namespace HeartForCharity.WebAPI.Filters
                 context.ModelState.AddModelError("error", context.Exception.Message);
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
             }
+            else if (context.Exception is NotFoundException)
+            {
+                context.ModelState.AddModelError("error", context.Exception.Message);
+                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
+            }
             else
             {
                 context.ModelState.AddModelError("error", "Server side error, please check logs.");

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:heartforcharity_desktop/model/responses/review.dart';
+import 'package:heartforcharity_shared/model/responses/review.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 import 'package:heartforcharity_desktop/providers/organisation_profile_provider.dart';
-import 'package:heartforcharity_desktop/providers/review_provider.dart';
+import 'package:heartforcharity_shared/providers/review_provider.dart';
+import 'package:heartforcharity_desktop/utils/auth_image.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -77,7 +79,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load reviews: $e')),
+          SnackBar(content: Text('Failed to load reviews: ${BaseProvider.cleanError(e)}')),
         );
       }
     } finally {
@@ -283,11 +285,20 @@ class _ReviewCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: colorScheme.surfaceContainerHighest),
-            child: Icon(Icons.person, size: 24, color: colorScheme.onSurfaceVariant),
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
+            backgroundImage: review.reviewerAvatarUrl != null && review.reviewerAvatarUrl!.isNotEmpty
+                ? authNetworkImage(review.reviewerAvatarUrl!)
+                : null,
+            child: review.reviewerAvatarUrl == null || review.reviewerAvatarUrl!.isEmpty
+                ? Text(
+                    (review.reviewerName != null && review.reviewerName!.isNotEmpty)
+                        ? review.reviewerName![0].toUpperCase()
+                        : '?',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: colorScheme.primary),
+                  )
+                : null,
           ),
           const SizedBox(width: 16),
           Expanded(

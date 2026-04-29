@@ -1,4 +1,5 @@
-﻿using HeartForCharity.Model.Requests;
+﻿using HeartForCharity.Model.Exceptions;
+using HeartForCharity.Model.Requests;
 using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
 using HeartForCharity.Services.Database;
@@ -23,7 +24,7 @@ namespace HeartForCharity.Services
                 query = query.Where(c => c.Name.Contains(search.FTS));
             if (search.CountryId.HasValue)
                 query = query.Where(c => c.CountryId == search.CountryId);
-            return query;
+            return query.OrderByDescending(c => c.CityId);
         }
 
         protected override CityResponse MapToResponse(City entity)
@@ -35,6 +36,14 @@ namespace HeartForCharity.Services
                 CountryId = entity.CountryId,
                 CountryName = entity.Country?.Name ?? string.Empty
             };
+        }
+
+        protected override async Task BeforeDelete(City entity)
+        {
+            var inUse = await _context.Addresses.AnyAsync(a => a.CityId == entity.CityId);
+
+            if (inUse)
+                throw new UserException("Cannot delete this city because it is in use.");
         }
     }
 }

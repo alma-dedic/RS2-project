@@ -9,5 +9,8 @@ using System.Threading.Tasks;
 
 namespace HeartForCharity.Services
 {
-    public interface IVolunteerSkillService : ICRUDService<VolunteerSkillResponse, VolunteerSkillSearchObject, VolunteerSkillInsertRequest, VolunteerSkillInsertRequest> { }
+    public interface IVolunteerSkillService : ICRUDService<VolunteerSkillResponse, VolunteerSkillSearchObject, VolunteerSkillInsertRequest, VolunteerSkillInsertRequest>
+    {
+        Task<PagedResult<VolunteerSkillResponse>> GetMyAsync();
+    }
 }

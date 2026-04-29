@@ -4,6 +4,7 @@ using HeartForCharity.Model.Responses;
 using HeartForCharity.Services.Database;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace HeartForCharity.Services.VolunteerJobStateMachine
@@ -47,7 +48,9 @@ namespace HeartForCharity.Services.VolunteerJobStateMachine
             CategoryName          = entity.Category?.Name,
             Title                 = entity.Title,
             Description           = entity.Description,
-            Requirements          = entity.Requirements,
+            RequiredSkills        = entity.VolunteerJobSkills
+                                        .Select(vjs => new SkillResponse { SkillId = vjs.SkillId, Name = vjs.Skill?.Name ?? string.Empty, Description = vjs.Skill?.Description })
+                                        .ToList(),
             StartDate             = entity.StartDate,
             EndDate               = entity.EndDate,
             IsRemote              = entity.IsRemote,

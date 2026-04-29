@@ -1,4 +1,5 @@
-﻿using HeartForCharity.Model.Responses;
+﻿using HeartForCharity.Model.Exceptions;
+using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
 using HeartForCharity.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -27,7 +28,10 @@ namespace HeartForCharity.WebAPI.Controllers
         [HttpGet("{id}")]
         public virtual async Task<T?> GetById(int id)
         {
-            return await _service.GetByIdAsync(id);
+            var result = await _service.GetByIdAsync(id);
+            if (result == null)
+                throw new NotFoundException($"{typeof(T).Name} with id {id} was not found.");
+            return result;
         }
     }
 }

@@ -1,5 +1,6 @@
 using HeartForCharity.Model.Enums;
 using System;
+using System.Collections.Generic;
 
 namespace HeartForCharity.Model.Requests
 {
@@ -9,7 +10,7 @@ namespace HeartForCharity.Model.Requests
         public int? AddressId { get; set; }
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
-        public string? Requirements { get; set; }
+        public List<int> SkillIds { get; set; } = new();
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public bool IsRemote { get; set; } = false;

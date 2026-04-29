@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:heartforcharity_mobile/model/responses/donation.dart';
 import 'package:heartforcharity_mobile/model/responses/volunteer_application.dart';
 import 'package:heartforcharity_mobile/providers/donation_provider.dart';
-import 'package:heartforcharity_mobile/providers/review_provider.dart';
+import 'package:heartforcharity_shared/providers/review_provider.dart';
 import 'package:heartforcharity_mobile/providers/volunteer_application_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -18,13 +18,11 @@ class ActivityScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: colorScheme.surfaceContainerHighest,
         appBar: AppBar(
-          backgroundColor: colorScheme.surface,
-          elevation: 0,
           title: const Text('Activity', style: TextStyle(fontWeight: FontWeight.w700)),
           bottom: TabBar(
-            labelColor: colorScheme.primary,
-            unselectedLabelColor: colorScheme.onSurfaceVariant,
-            indicatorColor: colorScheme.primary,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white.withValues(alpha: 0.7),
+            indicatorColor: Colors.white,
             indicatorWeight: 3,
             tabs: const [
               Tab(text: 'Applications'),
@@ -54,9 +52,8 @@ Widget _statusBadge(String status) {
     'Rejected': (const Color(0xFFF8D7DA), const Color(0xFF842029)),
     'Withdrawn': (const Color(0xFFE2E3E5), const Color(0xFF41464B)),
     'Completed': (const Color(0xFFCFE2FF), const Color(0xFF084298)),
-    'COMPLETED': (const Color(0xFFD1E7DD), const Color(0xFF0A3622)),
-    'FAILED': (const Color(0xFFF8D7DA), const Color(0xFF842029)),
-    'PENDING': (const Color(0xFFFFF3CD), const Color(0xFF856404)),
+    'Success': (const Color(0xFFD1E7DD), const Color(0xFF0A3622)),
+    'Failed': (const Color(0xFFF8D7DA), const Color(0xFF842029)),
   };
   final pair = colors[status] ?? (const Color(0xFFE2E3E5), const Color(0xFF41464B));
   return Container(
@@ -541,7 +538,7 @@ class _DonationsTabState extends State<_DonationsTab> with AutomaticKeepAliveCli
     setState(() => _loading = true);
     final provider = context.read<DonationProvider>();
     try {
-      final result = await provider.getUserDonations(filter: {'pageSize': 100});
+      final result = await provider.getUserDonations(filter: {'pageSize': 100, 'status': 'Success'});
       setState(() => _items = result.items);
     } catch (_) {
       setState(() => _items = []);

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 
 class AuthProvider with ChangeNotifier {
   static String? token;
@@ -10,10 +11,7 @@ class AuthProvider with ChangeNotifier {
 
   static const _storage = FlutterSecureStorage();
 
-  static String baseUrl = const String.fromEnvironment(
-    'baseUrl',
-    defaultValue: 'http://192.168.111.238:5145/api/',
-  );
+  static String get baseUrl => BaseProvider.baseUrl;
 
   bool _isLoggedIn = false;
   bool get isLoggedIn => _isLoggedIn;

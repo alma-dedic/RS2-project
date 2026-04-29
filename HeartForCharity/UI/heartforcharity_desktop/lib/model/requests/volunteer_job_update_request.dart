@@ -3,7 +3,7 @@ class VolunteerJobUpdateRequest {
   final int? addressId;
   final String title;
   final String? description;
-  final String? requirements;
+  final List<int> skillIds;
   final DateTime? startDate;
   final DateTime? endDate;
   final bool isRemote;
@@ -15,7 +15,7 @@ class VolunteerJobUpdateRequest {
     this.addressId,
     required this.title,
     this.description,
-    this.requirements,
+    this.skillIds = const [],
     this.startDate,
     this.endDate,
     this.isRemote = false,
@@ -28,9 +28,9 @@ class VolunteerJobUpdateRequest {
         'addressId': addressId,
         'title': title,
         'description': description,
-        'requirements': requirements,
-        'startDate': startDate?.toIso8601String(),
-        'endDate': endDate?.toIso8601String(),
+        'skillIds': skillIds,
+        'startDate': startDate?.toUtc().toIso8601String(),
+        'endDate': endDate?.toUtc().toIso8601String(),
         'isRemote': isRemote,
         'positionsAvailable': positionsAvailable,
         'status': status,

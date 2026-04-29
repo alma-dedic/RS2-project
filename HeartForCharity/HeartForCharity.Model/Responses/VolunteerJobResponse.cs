@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HeartForCharity.Model.Responses
 {
@@ -15,7 +12,7 @@ namespace HeartForCharity.Model.Responses
         public string? CategoryName { get; set; }
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
-        public string? Requirements { get; set; }
+        public List<SkillResponse> RequiredSkills { get; set; } = new();
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public bool IsRemote { get; set; }
@@ -24,6 +21,8 @@ namespace HeartForCharity.Model.Responses
         public int PositionsRemaining => PositionsAvailable - PositionsFilled;
         public string Status { get; set; } = null!;
         public int? AddressId { get; set; }
+        public int? CityId { get; set; }
+        public int? CountryId { get; set; }
         public string? CityName { get; set; }
         public DateTime CreatedAt { get; set; }
     }

@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:heartforcharity_desktop/model/responses/volunteer_job.dart';
-import 'package:heartforcharity_desktop/model/search_result.dart';
+import 'package:heartforcharity_shared/model/search_result.dart';
 import 'package:heartforcharity_desktop/providers/auth_provider.dart';
-import 'package:heartforcharity_desktop/providers/base_provider.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 
 class VolunteerJobProvider extends BaseProvider<VolunteerJob> {
   VolunteerJobProvider() : super('volunteerjob');

@@ -14,7 +14,6 @@ class VolunteerJobSearchObject extends BaseSearchObject {
     super.page,
     super.pageSize,
     super.includeTotalCount,
-    super.retrieveAll,
     this.categoryId,
     this.status,
     this.organisationProfileId,

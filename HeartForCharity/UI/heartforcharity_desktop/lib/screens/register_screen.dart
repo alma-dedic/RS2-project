@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:heartforcharity_desktop/providers/base_provider.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -407,7 +407,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           colorScheme: colorScheme,
           keyboardType: TextInputType.phone,
           validator: (v) {
-            if (v != null && v.length > 20) return 'Max 20 characters';
+            if (v != null && v.trim().isNotEmpty) {
+              if (!RegExp(r'^[\+\d\s\-()]{6,20}$').hasMatch(v.trim())) {
+                return 'Enter a valid phone (e.g. +387 33 123 456)';
+              }
+            }
             return null;
           },
         ),

@@ -2,12 +2,14 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:heartforcharity_desktop/utils/auth_image.dart';
 import 'package:heartforcharity_desktop/model/requests/campaign_insert_request.dart';
 import 'package:heartforcharity_desktop/model/requests/campaign_media_upsert_request.dart';
 import 'package:heartforcharity_desktop/model/requests/campaign_update_request.dart';
 import 'package:heartforcharity_desktop/model/responses/campaign.dart';
 import 'package:heartforcharity_desktop/model/responses/campaign_media.dart';
 import 'package:heartforcharity_desktop/model/responses/category.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 import 'package:heartforcharity_desktop/providers/campaign_media_provider.dart';
 import 'package:heartforcharity_desktop/providers/campaign_provider.dart';
 import 'package:heartforcharity_desktop/providers/category_provider.dart';
@@ -45,6 +47,8 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
   final List<Map<String, dynamic>> _newImages = [];
 
   bool _isLoading = false;
+  String? _startDateError;
+  String? _endDateError;
 
   @override
   void initState() {
@@ -77,10 +81,12 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
   Future<void> _loadCategories() async {
     try {
       final result = await context.read<CategoryProvider>().get(
-            filter: {'retrieveAll': true, 'appliesTo': 'Campaign'},
+            filter: {'pageSize': 100, 'appliesTo': 'Campaign'},
           );
       if (mounted) setState(() => _categories = result.items);
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    }
   }
 
   Future<void> _pickImages() async {
@@ -168,11 +174,30 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
       } else {
         _endDate = picked;
       }
+      _startDateError = null;
+      _endDateError = null;
     });
   }
 
+  bool _validateDates() {
+    String? startErr;
+    String? endErr;
+    if (_startDate == null) startErr = 'Start date is required.';
+    if (_endDate == null) endErr = 'End date is required.';
+    if (startErr == null && endErr == null && !_endDate!.isAfter(_startDate!)) {
+      endErr = 'End date must be after start date.';
+    }
+    setState(() {
+      _startDateError = startErr;
+      _endDateError = endErr;
+    });
+    return startErr == null && endErr == null;
+  }
+
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    final formOk = _formKey.currentState!.validate();
+    final datesOk = _validateDates();
+    if (!formOk || !datesOk) return;
 
     setState(() => _isLoading = true);
 
@@ -242,11 +267,16 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
         }
       }
 
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(widget.isEdit ? 'Campaign updated successfully.' : 'Campaign created successfully.')),
+        );
+        Navigator.of(context).pop(true);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save campaign: $e')),
+          SnackBar(content: Text('Failed to save campaign: ${BaseProvider.cleanError(e)}')),
         );
       }
     } finally {
@@ -262,9 +292,14 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
     setState(() => _isLoading = true);
     try {
       await campaignProvider.complete(widget.campaign!.campaignId);
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Campaign marked as completed.')),
+        );
+        Navigator.of(context).pop(true);
+      }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(BaseProvider.cleanError(e))));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -278,25 +313,14 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
     setState(() => _isLoading = true);
     try {
       await campaignProvider.cancel(widget.campaign!.campaignId);
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Campaign cancelled.')),
+        );
+        Navigator.of(context).pop(true);
+      }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _deleteCampaign() async {
-    final campaignProvider = context.read<CampaignProvider>();
-    final confirmed = await _confirm('Delete campaign', 'Permanently delete this campaign? This cannot be undone.');
-    if (!confirmed) return;
-
-    setState(() => _isLoading = true);
-    try {
-      await campaignProvider.delete(widget.campaign!.campaignId);
-      if (mounted) Navigator.of(context).pop(true);
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(BaseProvider.cleanError(e))));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -328,7 +352,6 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isActive = widget.campaign?.status == 'Active';
-    final canDelete = isActive && (widget.campaign?.donationCount ?? 0) == 0;
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerHighest,
@@ -406,6 +429,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                           const SizedBox(height: 12),
 
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
                                 child: Column(
@@ -418,6 +442,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                                       hint: 'Select start date',
                                       onTap: (!widget.isEdit || isActive) ? () => _pickDate(isStart: true) : null,
                                       colorScheme: colorScheme,
+                                      errorText: _startDateError,
                                     ),
                                   ],
                                 ),
@@ -434,6 +459,7 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                                       hint: 'Select end date',
                                       onTap: (!widget.isEdit || isActive) ? () => _pickDate(isStart: false) : null,
                                       colorScheme: colorScheme,
+                                      errorText: _endDateError,
                                     ),
                                   ],
                                 ),
@@ -557,24 +583,6 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
                                 ),
                               ],
                             ),
-                            if (canDelete) ...[
-                              const SizedBox(height: 12),
-                              Center(
-                                child: TextButton(
-                                  onPressed: _isLoading ? null : _deleteCampaign,
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: colorScheme.onSurfaceVariant,
-                                  ),
-                                  child: const Text(
-                                    'Delete campaign',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
                           ],
 
                           // Read-only notice for non-active campaigns
@@ -641,34 +649,50 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
     );
   }
 
-  Widget _buildDateField({required DateTime? value, required String hint, VoidCallback? onTap, required ColorScheme colorScheme}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: onTap != null ? colorScheme.surfaceContainerLow : colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: colorScheme.outline),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                value != null
-                    ? '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}'
-                    : hint,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: value != null ? colorScheme.onSurface : colorScheme.outlineVariant,
-                ),
-              ),
+  Widget _buildDateField({required DateTime? value, required String hint, VoidCallback? onTap, required ColorScheme colorScheme, String? errorText}) {
+    final hasError = errorText != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: hasError ? colorScheme.error : colorScheme.outline),
             ),
-            Icon(Icons.calendar_today_outlined, size: 18, color: onTap != null ? colorScheme.onSurfaceVariant : colorScheme.outlineVariant),
-          ],
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    value != null
+                        ? '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}'
+                        : hint,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: value != null ? colorScheme.onSurface : colorScheme.outlineVariant,
+                    ),
+                  ),
+                ),
+                Icon(Icons.calendar_today_outlined, size: 18, color: onTap != null ? colorScheme.onSurfaceVariant : colorScheme.outlineVariant),
+              ],
+            ),
+          ),
         ),
-      ),
+        if (hasError) ...[
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: Text(
+              errorText,
+              style: TextStyle(fontSize: 12, color: colorScheme.error),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -751,10 +775,10 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(9),
-              child: Image.network(
-                media.url!,
+              child: Image(
+                image: authNetworkImage(media.url!),
                 fit: BoxFit.cover,
-                errorBuilder: (context, e, s) => Icon(Icons.broken_image_outlined, color: colorScheme.onSurfaceVariant),
+                errorBuilder: (_, _, _) => Icon(Icons.broken_image_outlined, color: colorScheme.onSurfaceVariant),
               ),
             ),
           ),

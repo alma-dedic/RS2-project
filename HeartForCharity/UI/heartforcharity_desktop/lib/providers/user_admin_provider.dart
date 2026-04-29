@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:heartforcharity_desktop/model/responses/user_response.dart';
-import 'package:heartforcharity_desktop/providers/base_provider.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 import 'package:http/http.dart' as http;
 
 class UserAdminProvider extends BaseProvider<UserResponse> {
@@ -20,16 +20,16 @@ class UserAdminProvider extends BaseProvider<UserResponse> {
 
   Future<void> deleteUser(int userId) async {
     final url = Uri.parse('${BaseProvider.baseUrl}user/$userId');
-    final response = await http.delete(url, headers: createHeaders());
+    final response = await executeHttp(() => http.delete(url, headers: createHeaders()));
     isValidResponse(response);
   }
 
   Future<UserResponse> updateUserRaw(int userId, Map<String, dynamic> body) async {
     final url = Uri.parse('${BaseProvider.baseUrl}user/$userId');
-    final response = await http.put(url, headers: createHeaders(), body: jsonEncode(body));
-    if (isValidResponse(response)) {
-      return UserResponse.fromJson(jsonDecode(response.body));
-    }
-    throw Exception('Failed to update user');
+    final response = await executeHttp(
+      () => http.put(url, headers: createHeaders(), body: jsonEncode(body)),
+    );
+    isValidResponse(response);
+    return UserResponse.fromJson(jsonDecode(response.body));
   }
 }

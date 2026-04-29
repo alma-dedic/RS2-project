@@ -1,6 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'package:heartforcharity_mobile/model/responses/notification.dart';
-import 'package:heartforcharity_mobile/providers/base_provider.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 
 class NotificationProvider extends BaseProvider<AppNotification> {
   NotificationProvider() : super('notification');

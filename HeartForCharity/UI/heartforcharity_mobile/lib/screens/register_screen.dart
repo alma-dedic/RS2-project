@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:heartforcharity_mobile/providers/base_provider.dart';
+import 'package:heartforcharity_shared/providers/base_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -198,6 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     colorScheme: colorScheme,
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Required';
+                      if (v.trim().length < 2) return 'Min 2 characters';
                       if (v.length > 100) return 'Max 100 chars';
                       return null;
                     },
@@ -213,6 +214,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     colorScheme: colorScheme,
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Required';
+                      if (v.trim().length < 2) return 'Min 2 characters';
                       if (v.length > 100) return 'Max 100 chars';
                       return null;
                     },
@@ -230,7 +232,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               colorScheme: colorScheme,
               keyboardType: TextInputType.phone,
               validator: (v) {
-                if (v != null && v.isNotEmpty && v.length > 20) return 'Max 20 characters';
+                if (v != null && v.trim().isNotEmpty) {
+                  if (!RegExp(r'^[\+\d\s\-()]{6,20}$').hasMatch(v.trim())) {
+                    return 'Enter a valid phone (e.g. +387 61 123 456)';
+                  }
+                }
                 return null;
               },
             ),
@@ -249,6 +255,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               colorScheme: colorScheme,
               validator: (v) {
                 if (v == null || v.isEmpty) return 'Username is required';
+                if (v.trim().length < 3) return 'Min 3 characters';
                 if (v.length > 100) return 'Max 100 characters';
                 return null;
               },

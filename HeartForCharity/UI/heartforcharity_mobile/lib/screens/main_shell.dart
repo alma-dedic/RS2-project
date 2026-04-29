@@ -5,6 +5,10 @@ import 'package:heartforcharity_mobile/screens/home_screen.dart';
 import 'package:heartforcharity_mobile/screens/notifications_screen.dart';
 import 'package:heartforcharity_mobile/screens/profile_screen.dart';
 
+final GlobalKey<HomeScreenState> homeScreenKey = GlobalKey<HomeScreenState>();
+final GlobalKey<ExploreScreenState> exploreScreenKey = GlobalKey<ExploreScreenState>();
+final GlobalKey<ProfileScreenState> profileScreenKey = GlobalKey<ProfileScreenState>();
+
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -54,13 +58,26 @@ class _NavItem extends StatelessWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    ExploreScreen(),
-    NotificationsScreen(),
-    ActivityScreen(),
-    ProfileScreen(),
+  late final List<Widget> _screens = [
+    HomeScreen(key: homeScreenKey),
+    ExploreScreen(key: exploreScreenKey),
+    const NotificationsScreen(),
+    const ActivityScreen(),
+    ProfileScreen(key: profileScreenKey),
   ];
+
+  void _onTabTap(int index) {
+    if (index == 0 && _currentIndex != 0) {
+      homeScreenKey.currentState?.maybeShowOnboarding();
+    }
+    if (index == 1 && _currentIndex != 1) {
+      exploreScreenKey.currentState?.refreshMode();
+    }
+    if (index == 4 && _currentIndex != 4) {
+      profileScreenKey.currentState?.refreshSkills();
+    }
+    setState(() => _currentIndex = index);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,11 +99,11 @@ class _MainShellState extends State<MainShell> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home, index: 0, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i)),
-                _NavItem(icon: Icons.search_outlined, activeIcon: Icons.search, index: 1, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i)),
-                _NavItem(icon: Icons.notifications_outlined, activeIcon: Icons.notifications, index: 2, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i)),
-                _NavItem(icon: Icons.volunteer_activism_outlined, activeIcon: Icons.volunteer_activism, index: 3, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i)),
-                _NavItem(icon: Icons.person_outline, activeIcon: Icons.person, index: 4, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i)),
+                _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home, index: 0, currentIndex: _currentIndex, onTap: _onTabTap),
+                _NavItem(icon: Icons.search_outlined, activeIcon: Icons.search, index: 1, currentIndex: _currentIndex, onTap: _onTabTap),
+                _NavItem(icon: Icons.notifications_outlined, activeIcon: Icons.notifications, index: 2, currentIndex: _currentIndex, onTap: _onTabTap),
+                _NavItem(icon: Icons.volunteer_activism_outlined, activeIcon: Icons.volunteer_activism, index: 3, currentIndex: _currentIndex, onTap: _onTabTap),
+                _NavItem(icon: Icons.person_outline, activeIcon: Icons.person, index: 4, currentIndex: _currentIndex, onTap: _onTabTap),
               ],
             ),
           ),

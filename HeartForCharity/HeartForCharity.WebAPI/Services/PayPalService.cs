@@ -18,9 +18,12 @@ namespace HeartForCharity.WebAPI.Services
 
         public PayPalService(IConfiguration configuration)
         {
-            var clientId = configuration["PayPal:ClientId"]!;
-            var secret   = configuration["PayPal:Secret"]!;
-            var mode     = configuration["PayPal:Mode"] ?? "sandbox";
+            var clientId = configuration["PayPal:ClientId"]
+                ?? throw new InvalidOperationException("'PayPal:ClientId' is not configured.");
+            var secret   = configuration["PayPal:Secret"]
+                ?? throw new InvalidOperationException("'PayPal:Secret' is not configured.");
+            var mode     = configuration["PayPal:Mode"]
+                ?? throw new InvalidOperationException("'PayPal:Mode' is not configured.");
 
             PayPalEnvironment environment = mode == "live"
                 ? new LiveEnvironment(clientId, secret)
