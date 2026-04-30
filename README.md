@@ -74,6 +74,10 @@ Default API URL za mobile build je `http://10.0.2.2:5145/api/` (AVD-ova adresa z
 
 `careshare_org` i `lisa_taylor` imaju najkompletnije seed podatke (kampanje sa slikama, donacije, prijave, recenzije, notifikacije) — preporučeni su za demonstraciju end-to-end funkcionalnosti.
 
+PayPal account za testiranje:
+Email: sb-p2s04750865615@personal.example.com
+Password: test1234
+
 ### Dodatni demo nalozi
 
 Lozinka za sve dolje navedene naloge: `Test123!`
