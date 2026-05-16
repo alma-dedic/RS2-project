@@ -64,7 +64,7 @@ class _VolunteerJobDetailScreenState extends State<VolunteerJobDetailScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Withdraw Application'),
-        content: const Text('Are you sure you want to withdraw this application? You will not be able to apply again for this job.'),
+        content: const Text('Are you sure you want to withdraw this application?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
           TextButton(
@@ -345,11 +345,26 @@ class _VolunteerJobDetailScreenState extends State<VolunteerJobDetailScreen> {
           ],
         );
       case 'withdrawn':
-        return _StatusBanner(
-          label: 'You withdrew your application',
-          icon: Icons.do_not_disturb_alt_outlined,
-          background: const Color(0xFFE2E3E5),
-          foreground: const Color(0xFF41464B),
+        final hasSpots = job.positionsRemaining > 0;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _StatusBanner(
+              label: 'You withdrew your application',
+              icon: Icons.do_not_disturb_alt_outlined,
+              background: const Color(0xFFE2E3E5),
+              foreground: const Color(0xFF41464B),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: hasSpots ? _openApplySheet : null,
+                child: Text(hasSpots ? 'Apply again' : 'No spots available'),
+              ),
+            ),
+          ],
         );
       default:
         return const SizedBox.shrink();
@@ -517,7 +532,7 @@ class _ApplySheetState extends State<_ApplySheet> {
       }
 
       setState(() => _uploadingResume = true);
-      final url = await uploadProvider.uploadFile(file.path!);
+      final url = await uploadProvider.uploadDocument(file.path!);
       if (!mounted) return;
       setState(() {
         _resumeUrl = url;

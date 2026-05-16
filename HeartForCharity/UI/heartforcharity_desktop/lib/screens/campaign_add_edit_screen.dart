@@ -215,7 +215,6 @@ class _CampaignAddEditScreenState extends State<CampaignAddEditScreen> {
           startDate: _startDate,
           endDate: _endDate,
           targetAmount: double.parse(_targetAmountController.text.trim()),
-          status: c.status,
         );
 
         await campaignProvider.update(c.campaignId, request.toJson());

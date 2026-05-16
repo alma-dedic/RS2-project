@@ -216,12 +216,16 @@ namespace HeartForCharity.Services
         public async Task<(bool isValid, int userId)> ValidateRefreshTokenAsync(string token)
         {
             var refreshToken = await _context.RefreshTokens
+                .Include(rt => rt.User)
                 .FirstOrDefaultAsync(rt => rt.Token == token);
 
             if (refreshToken == null)
                 return (false, 0);
 
             if (refreshToken.IsRevoked || refreshToken.IsUsed || refreshToken.ExpiresAt < DateTime.UtcNow)
+                return (false, 0);
+
+            if (refreshToken.User == null || !refreshToken.User.IsActive)
                 return (false, 0);
 
             refreshToken.IsUsed = true;
@@ -236,7 +240,7 @@ namespace HeartForCharity.Services
             var refreshToken = await _context.RefreshTokens
                 .FirstOrDefaultAsync(rt => rt.Token == token);
 
-            if (refreshToken != null)
+            if (refreshToken != null && refreshToken.UserId == _currentUserService.UserId)
             {
                 refreshToken.IsRevoked = true;
                 await _context.SaveChangesAsync();
@@ -255,6 +259,8 @@ namespace HeartForCharity.Services
             (user.PasswordSalt, user.PasswordHash) = HashPassword(request.NewPassword);
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+
+            await DeleteUserRefreshTokensAsync(user.UserId);
         }
 
         public async Task DeactivateAccountAsync()
@@ -286,6 +292,21 @@ namespace HeartForCharity.Services
             user.IsActive = false;
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+
+            await DeleteUserRefreshTokensAsync(user.UserId);
+        }
+
+        private async Task DeleteUserRefreshTokensAsync(int userId)
+        {
+            var tokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId)
+                .ToListAsync();
+
+            if (tokens.Count > 0)
+            {
+                _context.RefreshTokens.RemoveRange(tokens);
+                await _context.SaveChangesAsync();
+            }
         }
 
         private static (string salt, string hash) HashPassword(string password)

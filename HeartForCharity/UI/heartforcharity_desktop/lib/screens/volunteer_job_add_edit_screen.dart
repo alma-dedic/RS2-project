@@ -235,7 +235,6 @@ class _VolunteerJobAddEditScreenState extends State<VolunteerJobAddEditScreen> {
           endDate: _endDate,
           isRemote: _isRemote,
           positionsAvailable: positions,
-          status: j.status,
         );
         await jobProvider.update(j.volunteerJobId, request.toJson());
       } else {

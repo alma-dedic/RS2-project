@@ -150,6 +150,8 @@ namespace HeartForCharity.Services
             if (orgProfile == null)
                 throw new UserException("Organisation profile not found for current user.");
 
+            await ValidateCategoryForJobAsync(request.CategoryId);
+
             entity.OrganisationProfileId = orgProfile.OrganisationProfileId;
             entity.Status                = VolunteerJobStatus.Active;
             entity.PositionsFilled       = 0;
@@ -170,6 +172,8 @@ namespace HeartForCharity.Services
             if (entity.Status != VolunteerJobStatus.Active)
                 throw new UserException("You can only edit active volunteer jobs.");
 
+            await ValidateCategoryForJobAsync(request.CategoryId);
+
             entity.UpdatedAt = DateTime.UtcNow;
 
             var existing = await _context.VolunteerJobSkills
@@ -179,6 +183,18 @@ namespace HeartForCharity.Services
 
             foreach (var skillId in request.SkillIds.Distinct())
                 _context.VolunteerJobSkills.Add(new VolunteerJobSkill { VolunteerJobId = entity.VolunteerJobId, SkillId = skillId });
+        }
+
+        private async Task ValidateCategoryForJobAsync(int? categoryId)
+        {
+            if (!categoryId.HasValue) return;
+
+            var category = await _context.Categories.FindAsync(categoryId.Value);
+            if (category == null)
+                throw new UserException("Category not found.");
+
+            if (category.AppliesTo != CategoryAppliesTo.VolunteerJob && category.AppliesTo != CategoryAppliesTo.Both)
+                throw new UserException("Selected category cannot be applied to volunteer jobs.");
         }
 
         protected override async Task BeforeDelete(VolunteerJob entity)

@@ -90,9 +90,21 @@ namespace HeartForCharity.Services
         private void DeleteUploadedFile(string url)
         {
             var fileName = Path.GetFileName(url);
-            var path = Path.Combine(_env.WebRootPath, "uploads", fileName);
-            if (File.Exists(path))
-                File.Delete(path);
+            if (string.IsNullOrEmpty(fileName)) return;
+
+            foreach (var subFolder in new[] { "public", "private" })
+            {
+                var path = Path.Combine(_env.WebRootPath, "uploads", subFolder, fileName);
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                    return;
+                }
+            }
+
+            var legacyPath = Path.Combine(_env.WebRootPath, "uploads", fileName);
+            if (File.Exists(legacyPath))
+                File.Delete(legacyPath);
         }
     }
 }

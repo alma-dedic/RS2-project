@@ -94,11 +94,15 @@ class AuthProvider with ChangeNotifier {
     final refreshToken = await _storage.read(key: 'refresh_token');
 
     if (refreshToken != null) {
-      await http.post(
-        Uri.parse('${baseUrl}user/logout'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'refreshToken': refreshToken}),
-      );
+      try {
+        final headers = <String, String>{'Content-Type': 'application/json'};
+        if (token != null) headers['Authorization'] = 'Bearer $token';
+        await http.post(
+          Uri.parse('${baseUrl}user/logout'),
+          headers: headers,
+          body: jsonEncode({'refreshToken': refreshToken}),
+        );
+      } catch (_) {}
     }
 
     token = null;

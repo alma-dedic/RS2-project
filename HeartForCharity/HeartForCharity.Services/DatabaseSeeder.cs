@@ -200,7 +200,7 @@ namespace HeartForCharity.Services
             await context.Campaigns.AddRangeAsync(camp1, camp2, camp3, camp4, camp5, camp6, camp7, camp8, camp9, camp10, camp11, camp12, camp13);
             await context.SaveChangesAsync();
 
-            const string seedImageUrl = "http://localhost:5145/api/upload/1ed8f493-ad7f-467a-b094-6b80d3e46c7e.png";
+            const string seedImageUrl = "http://localhost:5145/api/upload/public/1ed8f493-ad7f-467a-b094-6b80d3e46c7e.png";
             await context.CampaignMedias.AddRangeAsync(
                 new CampaignMedia { CampaignId = camp1.CampaignId,  Url = seedImageUrl, IsCover = true, MediaType = MediaType.Image, CreatedAt = now },
                 new CampaignMedia { CampaignId = camp9.CampaignId,  Url = seedImageUrl, IsCover = true, MediaType = MediaType.Image, CreatedAt = now },

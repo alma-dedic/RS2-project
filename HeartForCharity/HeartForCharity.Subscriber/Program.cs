@@ -20,6 +20,11 @@ var rabbitConnection = builder.Configuration["RabbitMQ:Connection"]
 builder.Services.AddHeartForCharityDatabase(connectionString);
 builder.Services.AddScoped<ApplicationApprovedConsumer>();
 builder.Services.AddScoped<ApplicationRejectedConsumer>();
+builder.Services.AddScoped<DonationSuccessfulConsumer>();
+builder.Services.AddScoped<CampaignCompletedConsumer>();
+builder.Services.AddScoped<CampaignCancelledConsumer>();
+builder.Services.AddScoped<VolunteerJobCompletedConsumer>();
+builder.Services.AddScoped<VolunteerJobCancelledConsumer>();
 
 var host = builder.Build();
 var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("HeartForCharity.Subscriber");
@@ -50,6 +55,66 @@ await bus.PubSub.SubscribeAsync<ApplicationRejectedEvent>(
             var consumer = scope.ServiceProvider.GetRequiredService<ApplicationRejectedConsumer>();
             await consumer.ConsumeAsync(msg);
         }, logger, nameof(ApplicationRejectedEvent), msg.VolunteerApplicationId);
+    });
+
+await bus.PubSub.SubscribeAsync<DonationSuccessfulEvent>(
+    "heartforcharity-donation-successful",
+    async msg =>
+    {
+        await ExecuteWithRetryAsync(async () =>
+        {
+            using var scope = host.Services.CreateScope();
+            var consumer = scope.ServiceProvider.GetRequiredService<DonationSuccessfulConsumer>();
+            await consumer.ConsumeAsync(msg);
+        }, logger, nameof(DonationSuccessfulEvent), msg.DonationId);
+    });
+
+await bus.PubSub.SubscribeAsync<CampaignCompletedEvent>(
+    "heartforcharity-campaign-completed",
+    async msg =>
+    {
+        await ExecuteWithRetryAsync(async () =>
+        {
+            using var scope = host.Services.CreateScope();
+            var consumer = scope.ServiceProvider.GetRequiredService<CampaignCompletedConsumer>();
+            await consumer.ConsumeAsync(msg);
+        }, logger, nameof(CampaignCompletedEvent), msg.CampaignId);
+    });
+
+await bus.PubSub.SubscribeAsync<CampaignCancelledEvent>(
+    "heartforcharity-campaign-cancelled",
+    async msg =>
+    {
+        await ExecuteWithRetryAsync(async () =>
+        {
+            using var scope = host.Services.CreateScope();
+            var consumer = scope.ServiceProvider.GetRequiredService<CampaignCancelledConsumer>();
+            await consumer.ConsumeAsync(msg);
+        }, logger, nameof(CampaignCancelledEvent), msg.CampaignId);
+    });
+
+await bus.PubSub.SubscribeAsync<VolunteerJobCompletedEvent>(
+    "heartforcharity-job-completed",
+    async msg =>
+    {
+        await ExecuteWithRetryAsync(async () =>
+        {
+            using var scope = host.Services.CreateScope();
+            var consumer = scope.ServiceProvider.GetRequiredService<VolunteerJobCompletedConsumer>();
+            await consumer.ConsumeAsync(msg);
+        }, logger, nameof(VolunteerJobCompletedEvent), msg.VolunteerJobId);
+    });
+
+await bus.PubSub.SubscribeAsync<VolunteerJobCancelledEvent>(
+    "heartforcharity-job-cancelled",
+    async msg =>
+    {
+        await ExecuteWithRetryAsync(async () =>
+        {
+            using var scope = host.Services.CreateScope();
+            var consumer = scope.ServiceProvider.GetRequiredService<VolunteerJobCancelledConsumer>();
+            await consumer.ConsumeAsync(msg);
+        }, logger, nameof(VolunteerJobCancelledEvent), msg.VolunteerJobId);
     });
 
 await host.RunAsync();

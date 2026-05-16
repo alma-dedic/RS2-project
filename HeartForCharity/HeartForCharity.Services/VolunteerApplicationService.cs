@@ -49,9 +49,51 @@ namespace HeartForCharity.Services
             return await state.RejectAsync(id, request);
         }
 
+        public override async Task<VolunteerApplicationResponse?> GetByIdAsync(int id)
+        {
+            var application = await _context.VolunteerApplications
+                .Include(va => va.VolunteerJob)
+                    .ThenInclude(j => j!.OrganisationProfile)
+                .Include(va => va.UserProfile)
+                    .ThenInclude(up => up!.User)
+                .Include(va => va.UserProfile)
+                    .ThenInclude(up => up!.Address)
+                        .ThenInclude(a => a!.City)
+                .Include(va => va.ReviewedByUser)
+                    .ThenInclude(u => u!.OrganisationProfile)
+                .Include(va => va.Review)
+                .FirstOrDefaultAsync(va => va.VolunteerApplicationId == id);
+
+            if (application == null)
+                return null;
+
+            var role = _currentUserService.Role;
+            var currentUserId = _currentUserService.UserId;
+
+            if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+                return MapToResponse(application);
+
+            if (string.Equals(role, "Organisation", StringComparison.OrdinalIgnoreCase))
+            {
+                if (application.VolunteerJob?.OrganisationProfile?.UserId == currentUserId)
+                    return MapToResponse(application);
+                return null;
+            }
+
+            if (string.Equals(role, "User", StringComparison.OrdinalIgnoreCase))
+            {
+                if (application.UserProfile?.UserId == currentUserId)
+                    return MapToResponse(application);
+                return null;
+            }
+
+            return null;
+        }
+
         protected override IQueryable<VolunteerApplication> ApplyFilter(IQueryable<VolunteerApplication> query, VolunteerApplicationSearchObject search)
         {
             query = query.Include(va => va.VolunteerJob)
+                             .ThenInclude(j => j!.OrganisationProfile)
                          .Include(va => va.UserProfile)
                              .ThenInclude(up => up!.User)
                          .Include(va => va.UserProfile)
@@ -60,6 +102,14 @@ namespace HeartForCharity.Services
                          .Include(va => va.ReviewedByUser)
                              .ThenInclude(u => u!.OrganisationProfile)
                          .Include(va => va.Review);
+
+            if (string.Equals(_currentUserService.Role, "Organisation", StringComparison.OrdinalIgnoreCase))
+            {
+                var currentUserId = _currentUserService.UserId;
+                query = query.Where(va => va.VolunteerJob != null
+                                       && va.VolunteerJob.OrganisationProfile != null
+                                       && va.VolunteerJob.OrganisationProfile.UserId == currentUserId);
+            }
 
             if (search.VolunteerJobId.HasValue)
                 query = query.Where(va => va.VolunteerJobId == search.VolunteerJobId);

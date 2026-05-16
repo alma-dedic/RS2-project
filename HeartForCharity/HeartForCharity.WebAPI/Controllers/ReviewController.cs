@@ -29,10 +29,10 @@ namespace HeartForCharity.WebAPI.Controllers
         public override async Task<ReviewResponse> Create([FromBody] ReviewInsertRequest request)
             => await base.Create(request);
 
-        [Authorize(Roles = Roles.User)]
-        [HttpPut("{id}")]
-        public override async Task<ReviewResponse?> Update(int id, [FromBody] ReviewInsertRequest request)
-            => await base.Update(id, request);
+        [NonAction]
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public override Task<ReviewResponse?> Update(int id, [FromBody] ReviewInsertRequest request)
+            => throw new NotSupportedException("Reviews are immutable; delete and create a new one if needed.");
 
         [Authorize(Roles = Roles.Admin)]
         [HttpDelete("{id}")]

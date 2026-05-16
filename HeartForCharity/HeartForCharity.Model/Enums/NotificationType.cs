@@ -4,6 +4,11 @@ namespace HeartForCharity.Model.Enums
     {
         ApplicationApproved,
         ApplicationRejected,
-        General
+        General,
+        DonationSuccessful,
+        CampaignCompleted,
+        CampaignCancelled,
+        VolunteerJobCompleted,
+        VolunteerJobCancelled
     }
 }

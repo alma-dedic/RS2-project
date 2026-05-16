@@ -33,13 +33,10 @@ namespace HeartForCharity.WebAPI.Controllers
             _jwtAudience = configuration["Jwt:Audience"]!;
         }
 
-        [AllowAnonymous]
-        [HttpPost]
-        public override async Task<UserResponse> Create([FromBody] UserInsertRequest request)
-        {
-            request.UserType = Model.Enums.UserType.User;
-            return await base.Create(request);
-        }
+        [NonAction]
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public override Task<UserResponse> Create([FromBody] UserInsertRequest request)
+            => throw new NotSupportedException("Use /api/user/register-user or /api/user/register-organisation.");
 
         [AllowAnonymous]
         [HttpPost("register-user")]
@@ -133,7 +130,7 @@ namespace HeartForCharity.WebAPI.Controllers
             });
         }
 
-        [AllowAnonymous]
+        [Authorize]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest request)
         {

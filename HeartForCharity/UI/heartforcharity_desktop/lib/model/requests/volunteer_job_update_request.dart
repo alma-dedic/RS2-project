@@ -8,7 +8,6 @@ class VolunteerJobUpdateRequest {
   final DateTime? endDate;
   final bool isRemote;
   final int positionsAvailable;
-  final String? status;
 
   VolunteerJobUpdateRequest({
     this.categoryId,
@@ -20,7 +19,6 @@ class VolunteerJobUpdateRequest {
     this.endDate,
     this.isRemote = false,
     required this.positionsAvailable,
-    this.status,
   });
 
   Map<String, dynamic> toJson() => {
@@ -33,6 +31,5 @@ class VolunteerJobUpdateRequest {
         'endDate': endDate?.toUtc().toIso8601String(),
         'isRemote': isRemote,
         'positionsAvailable': positionsAvailable,
-        'status': status,
       };
 }

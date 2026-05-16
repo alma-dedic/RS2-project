@@ -1,28 +1,21 @@
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 import 'package:heartforcharity_desktop/providers/auth_provider.dart';
 import 'package:heartforcharity_shared/providers/base_provider.dart';
 
 class UploadProvider with ChangeNotifier {
   Future<String> uploadImage(String filePath) async {
-    final url = Uri.parse('${BaseProvider.baseUrl}upload');
-    final request = http.MultipartRequest('POST', url);
+    final url = Uri.parse('${BaseProvider.baseUrl}upload/image');
+    final contentType = _imageMediaType(filePath);
 
-    request.headers['Authorization'] = 'Bearer ${AuthProvider.token}';
-    request.files.add(await http.MultipartFile.fromPath('file', filePath));
-
-    var streamedResponse = await request.send();
-    var response = await http.Response.fromStream(streamedResponse);
+    var response = await _sendUpload(url, filePath, contentType);
 
     if (response.statusCode == 401) {
       final refreshed = await AuthProvider.tryRefresh();
       if (refreshed) {
-        final retryRequest = http.MultipartRequest('POST', url);
-        retryRequest.headers['Authorization'] = 'Bearer ${AuthProvider.token}';
-        retryRequest.files.add(await http.MultipartFile.fromPath('file', filePath));
-        streamedResponse = await retryRequest.send();
-        response = await http.Response.fromStream(streamedResponse);
+        response = await _sendUpload(url, filePath, contentType);
       }
     }
 
@@ -37,5 +30,25 @@ class UploadProvider with ChangeNotifier {
       } catch (_) {}
       throw Exception(message);
     }
+  }
+
+  Future<http.Response> _sendUpload(Uri url, String filePath, MediaType? contentType) async {
+    final request = http.MultipartRequest('POST', url);
+    request.headers['Authorization'] = 'Bearer ${AuthProvider.token}';
+    request.files.add(await http.MultipartFile.fromPath(
+      'file',
+      filePath,
+      contentType: contentType,
+    ));
+    final streamed = await request.send();
+    return http.Response.fromStream(streamed);
+  }
+
+  MediaType? _imageMediaType(String filePath) {
+    final lower = filePath.toLowerCase();
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return MediaType('image', 'jpeg');
+    if (lower.endsWith('.png')) return MediaType('image', 'png');
+    if (lower.endsWith('.webp')) return MediaType('image', 'webp');
+    return null;
   }
 }

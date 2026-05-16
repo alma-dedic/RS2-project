@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using PayPalCheckoutSdk.Core;
 using PayPalCheckoutSdk.Orders;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 
 namespace HeartForCharity.WebAPI.Services
@@ -9,12 +10,14 @@ namespace HeartForCharity.WebAPI.Services
     public interface IPayPalService
     {
         Task<(string OrderId, string ApprovalUrl)> CreateOrderAsync(decimal amount, string currency = "USD");
-        Task<(string Status, string? TransactionId)> CaptureOrderAsync(string orderId);
+        Task<(string Status, string? TransactionId, decimal? Amount, string? Currency)> CaptureOrderAsync(string orderId);
     }
 
     public class PayPalService : IPayPalService
     {
         private readonly PayPalHttpClient _client;
+        private readonly string _returnUrl;
+        private readonly string _cancelUrl;
 
         public PayPalService(IConfiguration configuration)
         {
@@ -24,6 +27,11 @@ namespace HeartForCharity.WebAPI.Services
                 ?? throw new InvalidOperationException("'PayPal:Secret' is not configured.");
             var mode     = configuration["PayPal:Mode"]
                 ?? throw new InvalidOperationException("'PayPal:Mode' is not configured.");
+
+            _returnUrl = configuration["PayPal:ReturnUrl"]
+                ?? throw new InvalidOperationException("'PayPal:ReturnUrl' is not configured.");
+            _cancelUrl = configuration["PayPal:CancelUrl"]
+                ?? throw new InvalidOperationException("'PayPal:CancelUrl' is not configured.");
 
             PayPalEnvironment environment = mode == "live"
                 ? new LiveEnvironment(clientId, secret)
@@ -46,14 +54,14 @@ namespace HeartForCharity.WebAPI.Services
                         AmountWithBreakdown = new AmountWithBreakdown
                         {
                             CurrencyCode = currency,
-                            Value        = amount.ToString("F2")
+                            Value        = amount.ToString("F2", CultureInfo.InvariantCulture)
                         }
                     }
                 },
                 ApplicationContext = new ApplicationContext
                 {
-                    ReturnUrl         = "https://example.com/payment/return",
-                    CancelUrl         = "https://example.com/payment/cancel",
+                    ReturnUrl         = _returnUrl,
+                    CancelUrl         = _cancelUrl,
                     ShippingPreference = "NO_SHIPPING",
                     UserAction        = "PAY_NOW"
                 }
@@ -75,7 +83,7 @@ namespace HeartForCharity.WebAPI.Services
             return (order.Id, approvalUrl);
         }
 
-        public async Task<(string Status, string? TransactionId)> CaptureOrderAsync(string orderId)
+        public async Task<(string Status, string? TransactionId, decimal? Amount, string? Currency)> CaptureOrderAsync(string orderId)
         {
             var request = new OrdersCaptureRequest(orderId);
             request.RequestBody(new OrderActionRequest());
@@ -83,9 +91,19 @@ namespace HeartForCharity.WebAPI.Services
             var response = await _client.Execute(request);
             var order    = response.Result<Order>();
 
-            string? transactionId = order.PurchaseUnits?[0]?.Payments?.Captures?[0]?.Id;
+            var capture = order.PurchaseUnits?[0]?.Payments?.Captures?[0];
+            string? transactionId = capture?.Id;
 
-            return (order.Status, transactionId);
+            decimal? amount = null;
+            string? currency = null;
+            if (capture?.Amount != null)
+            {
+                if (decimal.TryParse(capture.Amount.Value, NumberStyles.Number, CultureInfo.InvariantCulture, out var parsed))
+                    amount = parsed;
+                currency = capture.Amount.CurrencyCode;
+            }
+
+            return (order.Status, transactionId, amount, currency);
         }
     }
 }

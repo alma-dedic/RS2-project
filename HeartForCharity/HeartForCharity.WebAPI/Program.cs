@@ -177,13 +177,14 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Block direct access to /uploads/ — files are served through /api/upload/{fileName} with [Authorize]
+// Block direct access to /uploads/ — files are served through /api/upload/public/{fileName} (anonymous)
+// or /api/upload/private/{fileName} ([Authorize] + ownership check).
 app.Use(async (context, next) =>
 {
     if (context.Request.Path.StartsWithSegments("/uploads"))
     {
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        await context.Response.WriteAsync("Unauthorized. Use /api/upload/{fileName} to access files.");
+        await context.Response.WriteAsync("Unauthorized. Use /api/upload/public/{fileName} or /api/upload/private/{fileName} to access files.");
         return;
     }
     await next();
