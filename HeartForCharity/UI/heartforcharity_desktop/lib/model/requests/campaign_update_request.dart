@@ -5,7 +5,6 @@ class CampaignUpdateRequest {
   final DateTime? startDate;
   final DateTime? endDate;
   final double targetAmount;
-  final String? status;
 
   CampaignUpdateRequest({
     this.categoryId,
@@ -14,7 +13,6 @@ class CampaignUpdateRequest {
     this.startDate,
     this.endDate,
     required this.targetAmount,
-    this.status,
   });
 
   Map<String, dynamic> toJson() => {
@@ -24,6 +22,5 @@ class CampaignUpdateRequest {
         'startDate': startDate?.toUtc().toIso8601String(),
         'endDate': endDate?.toUtc().toIso8601String(),
         'targetAmount': targetAmount,
-        'status': status,
       };
 }

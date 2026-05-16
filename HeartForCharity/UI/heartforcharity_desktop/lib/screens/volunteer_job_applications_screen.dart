@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:heartforcharity_desktop/model/responses/volunteer_application.dart';
 import 'package:heartforcharity_desktop/model/responses/volunteer_job.dart';
 import 'package:heartforcharity_desktop/model/search_objects/volunteer_application_search_object.dart';
+import 'package:heartforcharity_desktop/providers/auth_provider.dart';
 import 'package:heartforcharity_shared/providers/base_provider.dart';
 import 'package:heartforcharity_desktop/providers/volunteer_application_provider.dart';
 import 'package:intl/intl.dart';
@@ -99,78 +102,88 @@ class _VolunteerJobApplicationsScreenState extends State<VolunteerJobApplication
     final reasonController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocalState) {
+          final reason = reasonController.text.trim();
+          final isValid = reason.isNotEmpty && reason.length <= 500;
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Padding(
+                padding: const EdgeInsets.all(28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text('Reject application',
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Theme.of(ctx).colorScheme.onSurface)),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text('Reject application',
+                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Theme.of(ctx).colorScheme.onSurface)),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          icon: Icon(Icons.close, size: 20, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                          splashRadius: 18,
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                      icon: Icon(Icons.close, size: 20, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
-                      splashRadius: 18,
+                    const SizedBox(height: 16),
+                    Text('Please provide a reason:',
+                        style: TextStyle(fontSize: 13, color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: reasonController,
+                      maxLines: 3,
+                      maxLength: 500,
+                      onChanged: (_) => setLocalState(() {}),
+                      decoration: const InputDecoration(
+                        hintText: 'Rejection reason (required)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Theme.of(ctx).colorScheme.onSurface,
+                            side: BorderSide(color: Theme.of(ctx).colorScheme.outlineVariant),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: isValid ? () => Navigator.of(ctx).pop(true) : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(ctx).colorScheme.error,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          ),
+                          child: const Text('Reject'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Text('Optionally provide a reason:',
-                    style: TextStyle(fontSize: 13, color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: reasonController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    hintText: 'Rejection reason (optional)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    OutlinedButton(
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Theme.of(ctx).colorScheme.onSurface,
-                        side: BorderSide(color: Theme.of(ctx).colorScheme.outlineVariant),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      ),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(ctx).colorScheme.error,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      ),
-                      child: const Text('Reject'),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
     if (confirmed != true) return;
+    final reason = reasonController.text.trim();
+    if (reason.isEmpty) return;
     try {
-      await provider.reject(app.volunteerApplicationId, reason: reasonController.text.trim().isEmpty ? null : reasonController.text.trim());
+      await provider.reject(app.volunteerApplicationId, reason: reason);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Application rejected.')),
@@ -419,12 +432,7 @@ class _ApplicationCard extends StatelessWidget {
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
-                      onTap: () async {
-                        final uri = Uri.tryParse(application.resumeUrl!);
-                        if (uri != null && await canLaunchUrl(uri)) {
-                          await launchUrl(uri, mode: LaunchMode.externalApplication);
-                        }
-                      },
+                      onTap: () => _openResume(ctx, application.resumeUrl!),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
@@ -497,6 +505,51 @@ class _ApplicationCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _openResume(BuildContext context, String resumeUrl) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      var response = await _fetchResume(resumeUrl);
+      if (response.statusCode == 401) {
+        final refreshed = await AuthProvider.tryRefresh();
+        if (refreshed) {
+          response = await _fetchResume(resumeUrl);
+        }
+      }
+
+      if (response.statusCode == 403) {
+        messenger.showSnackBar(const SnackBar(content: Text('You are not authorised to download this resume.')));
+        return;
+      }
+      if (response.statusCode == 404) {
+        messenger.showSnackBar(const SnackBar(content: Text('Resume not found.')));
+        return;
+      }
+      if (response.statusCode >= 300) {
+        messenger.showSnackBar(SnackBar(content: Text('Failed to download resume (${response.statusCode}).')));
+        return;
+      }
+
+      final fileName = Uri.parse(resumeUrl).pathSegments.last;
+      final tempPath = '${Directory.systemTemp.path}${Platform.pathSeparator}$fileName';
+      final tempFile = File(tempPath);
+      await tempFile.writeAsBytes(response.bodyBytes, flush: true);
+
+      final opened = await launchUrl(Uri.file(tempFile.path), mode: LaunchMode.externalApplication);
+      if (!opened) {
+        messenger.showSnackBar(const SnackBar(content: Text('Could not open resume.')));
+      }
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Failed to open resume: $e')));
+    }
+  }
+
+  Future<http.Response> _fetchResume(String url) {
+    final headers = AuthProvider.token != null
+        ? {'Authorization': 'Bearer ${AuthProvider.token}'}
+        : <String, String>{};
+    return http.get(Uri.parse(url), headers: headers);
   }
 
   @override

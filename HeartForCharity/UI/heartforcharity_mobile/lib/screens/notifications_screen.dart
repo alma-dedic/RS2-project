@@ -190,9 +190,15 @@ class _NotificationCard extends StatelessWidget {
   IconData get _icon {
     switch (notification.type) {
       case 'ApplicationApproved':
+      case 'VolunteerJobCompleted':
+      case 'CampaignCompleted':
         return Icons.check_circle_outline;
       case 'ApplicationRejected':
+      case 'CampaignCancelled':
+      case 'VolunteerJobCancelled':
         return Icons.cancel_outlined;
+      case 'DonationSuccessful':
+        return Icons.favorite_outline;
       default:
         return Icons.notifications_outlined;
     }
@@ -201,9 +207,15 @@ class _NotificationCard extends StatelessWidget {
   Color _iconColor(ColorScheme cs) {
     switch (notification.type) {
       case 'ApplicationApproved':
+      case 'VolunteerJobCompleted':
+      case 'CampaignCompleted':
         return const Color(0xFF10B981);
       case 'ApplicationRejected':
+      case 'CampaignCancelled':
+      case 'VolunteerJobCancelled':
         return cs.error;
+      case 'DonationSuccessful':
+        return const Color(0xFFEC4899);
       default:
         return cs.primary;
     }

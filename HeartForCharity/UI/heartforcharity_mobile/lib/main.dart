@@ -173,7 +173,7 @@ class _AppStartupState extends State<AppStartup> {
     final type = AuthProvider.userType;
     final hasToken = AuthProvider.token != null;
 
-    if (hasToken && (type == 'Donor' || type == 'Volunteer')) {
+    if (hasToken && type == 'User') {
       final refreshed = await AuthProvider.tryRefresh();
       if (!mounted) return;
 

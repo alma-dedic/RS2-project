@@ -55,19 +55,19 @@ namespace HeartForCharity.WebAPI.Controllers
         [HttpPost("capture/{orderId}")]
         public async Task<DonationResponse> Capture(string orderId)
         {
-            var (status, transactionId) = await _payPalService.CaptureOrderAsync(orderId);
-            return await _donationService.CaptureAsync(orderId, status ?? "FAILED", transactionId);
+            var (status, transactionId, amount, currency) = await _payPalService.CaptureOrderAsync(orderId);
+            return await _donationService.CaptureAsync(orderId, status ?? "FAILED", transactionId, amount, currency);
         }
 
-        [Authorize(Roles = Roles.User)]
-        [HttpPost]
-        public override async Task<DonationResponse> Create([FromBody] DonationInsertRequest request)
-            => await base.Create(request);
+        [NonAction]
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public override Task<DonationResponse> Create([FromBody] DonationInsertRequest request)
+            => throw new NotSupportedException("Donations are created through /create-order and /capture endpoints (PayPal flow).");
 
-        [Authorize(Roles = Roles.Admin)]
-        [HttpPut("{id}")]
-        public override async Task<DonationResponse?> Update(int id, [FromBody] DonationInsertRequest request)
-            => await base.Update(id, request);
+        [NonAction]
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public override Task<DonationResponse?> Update(int id, [FromBody] DonationInsertRequest request)
+            => throw new NotSupportedException("Donations are immutable financial records; they cannot be edited.");
 
         [NonAction]
         public override Task<bool> Delete(int id) => throw new NotSupportedException();

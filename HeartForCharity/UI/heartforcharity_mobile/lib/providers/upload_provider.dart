@@ -1,31 +1,30 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:heartforcharity_mobile/providers/auth_provider.dart';
 import 'package:heartforcharity_shared/providers/base_provider.dart';
 
 class UploadProvider with ChangeNotifier {
-  Future<String> uploadImage(String filePath) => _upload(filePath, 'image');
-  Future<String> uploadFile(String filePath) => _upload(filePath, 'file');
+  Future<String> uploadImage(String filePath) =>
+      _upload(filePath, 'image', 'image', _imageMediaType(filePath));
+  Future<String> uploadDocument(String filePath) =>
+      _upload(filePath, 'document', 'document', _documentMediaType(filePath));
 
-  Future<String> _upload(String filePath, String label) async {
-    final url = Uri.parse('${BaseProvider.baseUrl}upload');
-    final request = http.MultipartRequest('POST', url);
+  Future<String> _upload(
+    String filePath,
+    String endpoint,
+    String label,
+    MediaType? contentType,
+  ) async {
+    final url = Uri.parse('${BaseProvider.baseUrl}upload/$endpoint');
 
-    request.headers['Authorization'] = 'Bearer ${AuthProvider.token}';
-    request.files.add(await http.MultipartFile.fromPath('file', filePath));
-
-    var streamedResponse = await request.send();
-    var response = await http.Response.fromStream(streamedResponse);
+    var response = await _send(url, filePath, contentType);
 
     if (response.statusCode == 401) {
       final refreshed = await AuthProvider.tryRefresh();
       if (refreshed) {
-        final retryRequest = http.MultipartRequest('POST', url);
-        retryRequest.headers['Authorization'] = 'Bearer ${AuthProvider.token}';
-        retryRequest.files.add(await http.MultipartFile.fromPath('file', filePath));
-        streamedResponse = await retryRequest.send();
-        response = await http.Response.fromStream(streamedResponse);
+        response = await _send(url, filePath, contentType);
       }
     }
 
@@ -44,5 +43,30 @@ class UploadProvider with ChangeNotifier {
       }
     }
     throw Exception(message);
+  }
+
+  Future<http.Response> _send(Uri url, String filePath, MediaType? contentType) async {
+    final request = http.MultipartRequest('POST', url);
+    request.headers['Authorization'] = 'Bearer ${AuthProvider.token}';
+    request.files.add(await http.MultipartFile.fromPath(
+      'file',
+      filePath,
+      contentType: contentType,
+    ));
+    final streamed = await request.send();
+    return http.Response.fromStream(streamed);
+  }
+
+  MediaType? _imageMediaType(String filePath) {
+    final lower = filePath.toLowerCase();
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return MediaType('image', 'jpeg');
+    if (lower.endsWith('.png')) return MediaType('image', 'png');
+    if (lower.endsWith('.webp')) return MediaType('image', 'webp');
+    return null;
+  }
+
+  MediaType? _documentMediaType(String filePath) {
+    if (filePath.toLowerCase().endsWith('.pdf')) return MediaType('application', 'pdf');
+    return null;
   }
 }

@@ -63,6 +63,7 @@ namespace HeartForCharity.Services
 
 
             var appliedJobIds = userProfile.VolunteerApplications
+                .Where(va => va.Status != ApplicationStatus.Withdrawn)
                 .Select(va => va.VolunteerJobId)
                 .ToHashSet();
 

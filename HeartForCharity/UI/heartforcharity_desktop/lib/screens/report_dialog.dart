@@ -47,6 +47,29 @@ class _ReportDialogState extends State<ReportDialog> {
     }
   }
 
+  Future<void> _print() async {
+    setState(() => _isLoading = true);
+    try {
+      final provider = context.read<ReportProvider>();
+      switch (_selected) {
+        case _ReportType.donations:
+          await provider.printDonationsReport(fromDate: _fromDate, toDate: _toDate);
+        case _ReportType.campaigns:
+          await provider.printCampaignsReport(status: _campaignStatus);
+        case _ReportType.volunteers:
+          await provider.printVolunteersReport();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -109,6 +132,19 @@ class _ReportDialogState extends State<ReportDialog> {
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     ),
                     child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 12),
+                  OutlinedButton.icon(
+                    onPressed: _isLoading ? null : _print,
+                    icon: const Icon(Icons.print_outlined, size: 16),
+                    label: const Text('Print'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colorScheme.primary,
+                      side: BorderSide(color: colorScheme.primary),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton.icon(

@@ -1,20 +1,29 @@
+using EasyNetQ;
 using HeartForCharity.Model.Enums;
 using HeartForCharity.Model.Exceptions;
+using HeartForCharity.Model.Messages;
 using HeartForCharity.Model.Responses;
 using HeartForCharity.Services.Database;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace HeartForCharity.Services.VolunteerJobStateMachine
 {
     public class ActiveVolunteerJobState : BaseVolunteerJobState
     {
+        private readonly IBus _bus;
+
         public ActiveVolunteerJobState(
             HeartForCharityDbContext context,
             ICurrentUserService currentUserService,
-            IServiceProvider serviceProvider)
-            : base(context, currentUserService, serviceProvider) { }
+            IServiceProvider serviceProvider,
+            IBus bus)
+            : base(context, currentUserService, serviceProvider)
+        {
+            _bus = bus;
+        }
 
         public override async Task<VolunteerJobResponse> CompleteAsync(int id)
         {
@@ -36,7 +45,24 @@ namespace HeartForCharity.Services.VolunteerJobStateMachine
             job.Status    = VolunteerJobStatus.Completed;
             job.UpdatedAt = DateTime.UtcNow;
 
+            var approvedApplications = await _context.VolunteerApplications
+                .Where(a => a.VolunteerJobId == id && a.Status == ApplicationStatus.Approved)
+                .ToListAsync();
+
+            var now = DateTime.UtcNow;
+            foreach (var application in approvedApplications)
+            {
+                application.IsCompleted = true;
+                application.UpdatedAt = now;
+            }
+
             await _context.SaveChangesAsync();
+
+            await _bus.PubSub.PublishAsync(new VolunteerJobCompletedEvent
+            {
+                VolunteerJobId = job.VolunteerJobId,
+                JobTitle       = job.Title
+            });
 
             return MapToResponse(job);
         }
@@ -62,6 +88,12 @@ namespace HeartForCharity.Services.VolunteerJobStateMachine
             job.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            await _bus.PubSub.PublishAsync(new VolunteerJobCancelledEvent
+            {
+                VolunteerJobId = job.VolunteerJobId,
+                JobTitle       = job.Title
+            });
 
             return MapToResponse(job);
         }

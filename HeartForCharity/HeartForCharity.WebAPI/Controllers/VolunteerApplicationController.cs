@@ -40,10 +40,10 @@ namespace HeartForCharity.WebAPI.Controllers
         public override async Task<VolunteerApplicationResponse> Create([FromBody] VolunteerApplicationInsertRequest request)
             => await base.Create(request);
 
-        [Authorize(Roles = Roles.Organisation)]
-        [HttpPut("{id}")]
-        public override async Task<VolunteerApplicationResponse?> Update(int id, [FromBody] VolunteerApplicationInsertRequest request)
-            => await base.Update(id, request);
+        [NonAction]
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public override Task<VolunteerApplicationResponse?> Update(int id, [FromBody] VolunteerApplicationInsertRequest request)
+            => throw new NotSupportedException("Use /approve, /reject or /withdraw endpoints.");
 
         [NonAction]
         public override Task<bool> Delete(int id) => throw new NotSupportedException();

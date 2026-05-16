@@ -1,4 +1,3 @@
-using HeartForCharity.Model.Enums;
 using System;
 using System.Collections.Generic;
 
@@ -15,6 +14,5 @@ namespace HeartForCharity.Model.Requests
         public DateTime? EndDate { get; set; }
         public bool IsRemote { get; set; } = false;
         public int PositionsAvailable { get; set; }
-        public VolunteerJobStatus Status { get; set; }
     }
 }

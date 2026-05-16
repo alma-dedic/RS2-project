@@ -136,6 +136,8 @@ namespace HeartForCharity.Services
             if (orgProfile == null)
                 throw new UserException("Organisation profile not found for current user.");
 
+            await ValidateCategoryForCampaignAsync(request.CategoryId);
+
             entity.OrganisationProfileId = orgProfile.OrganisationProfileId;
             entity.Status = CampaignStatus.Active;
             entity.CurrentAmount = 0;
@@ -153,7 +155,21 @@ namespace HeartForCharity.Services
             if (entity.Status != CampaignStatus.Active)
                 throw new UserException("You can only edit active campaigns.");
 
+            await ValidateCategoryForCampaignAsync(request.CategoryId);
+
             entity.UpdatedAt = DateTime.UtcNow;
+        }
+
+        private async Task ValidateCategoryForCampaignAsync(int? categoryId)
+        {
+            if (!categoryId.HasValue) return;
+
+            var category = await _context.Categories.FindAsync(categoryId.Value);
+            if (category == null)
+                throw new UserException("Category not found.");
+
+            if (category.AppliesTo != CategoryAppliesTo.Campaign && category.AppliesTo != CategoryAppliesTo.Both)
+                throw new UserException("Selected category cannot be applied to campaigns.");
         }
 
         protected override async Task BeforeDelete(Campaign entity)

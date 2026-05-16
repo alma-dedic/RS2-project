@@ -1,4 +1,3 @@
-using HeartForCharity.Model.Enums;
 using System;
 
 namespace HeartForCharity.Model.Requests
@@ -11,6 +10,5 @@ namespace HeartForCharity.Model.Requests
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public decimal TargetAmount { get; set; }
-        public CampaignStatus Status { get; set; }
     }
 }

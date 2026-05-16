@@ -8,7 +8,7 @@ namespace HeartForCharity.Services
     public interface IDonationService : ICRUDService<DonationResponse, DonationSearchObject, DonationInsertRequest, DonationInsertRequest>
     {
         Task<DonationCreateOrderResponse> CreateOrderAsync(DonationCreateOrderRequest request, string paypalOrderId, string approvalUrl);
-        Task<DonationResponse> CaptureAsync(string paypalOrderId, string captureStatus, string? transactionId);
+        Task<DonationResponse> CaptureAsync(string paypalOrderId, string captureStatus, string? transactionId, decimal? capturedAmount, string? capturedCurrency);
         Task<PagedResult<DonationResponse>> GetMyAsync(DonationSearchObject search);
         Task<PagedResult<DonationResponse>> GetByCampaignAsync(int campaignId);
     }

@@ -1,5 +1,7 @@
+using EasyNetQ;
 using HeartForCharity.Model.Enums;
 using HeartForCharity.Model.Exceptions;
+using HeartForCharity.Model.Messages;
 using HeartForCharity.Model.Requests;
 using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
@@ -15,17 +17,28 @@ namespace HeartForCharity.Services
     public class DonationService : BaseCRUDService<DonationResponse, DonationSearchObject, Donation, DonationInsertRequest, DonationInsertRequest>, IDonationService
     {
         private readonly ICurrentUserService _currentUserService;
+        private readonly IBus _bus;
 
-        public DonationService(HeartForCharityDbContext context, IMapper mapper, ICurrentUserService currentUserService)
+        public DonationService(HeartForCharityDbContext context, IMapper mapper, ICurrentUserService currentUserService, IBus bus)
             : base(context, mapper)
         {
             _currentUserService = currentUserService;
+            _bus = bus;
         }
 
         protected override IQueryable<Donation> ApplyFilter(IQueryable<Donation> query, DonationSearchObject search)
         {
             query = query.Include(d => d.Campaign)
+                             .ThenInclude(c => c!.OrganisationProfile)
                          .Include(d => d.UserProfile);
+
+            if (string.Equals(_currentUserService.Role, "Organisation", StringComparison.OrdinalIgnoreCase))
+            {
+                var currentUserId = _currentUserService.UserId;
+                query = query.Where(d => d.Campaign != null
+                                      && d.Campaign.OrganisationProfile != null
+                                      && d.Campaign.OrganisationProfile.UserId == currentUserId);
+            }
 
             if (search.CampaignId.HasValue)
                 query = query.Where(d => d.CampaignId == search.CampaignId);
@@ -161,8 +174,44 @@ namespace HeartForCharity.Services
             };
         }
 
-        public async Task<DonationResponse> CaptureAsync(string paypalOrderId, string captureStatus, string? transactionId)
+        public override async Task<DonationResponse?> GetByIdAsync(int id)
         {
+            var donation = await _context.Donations
+                .Include(d => d.Campaign)
+                    .ThenInclude(c => c!.OrganisationProfile)
+                .Include(d => d.UserProfile)
+                .FirstOrDefaultAsync(d => d.DonationId == id);
+
+            if (donation == null)
+                return null;
+
+            var role = _currentUserService.Role;
+            var currentUserId = _currentUserService.UserId;
+
+            if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+                return MapToResponse(donation);
+
+            if (string.Equals(role, "Organisation", StringComparison.OrdinalIgnoreCase))
+            {
+                if (donation.Campaign?.OrganisationProfile?.UserId == currentUserId)
+                    return MapToResponse(donation);
+                return null;
+            }
+
+            if (string.Equals(role, "User", StringComparison.OrdinalIgnoreCase))
+            {
+                if (donation.UserProfile?.UserId == currentUserId)
+                    return MapToResponse(donation);
+                return null;
+            }
+
+            return null;
+        }
+
+        public async Task<DonationResponse> CaptureAsync(string paypalOrderId, string captureStatus, string? transactionId, decimal? capturedAmount, string? capturedCurrency)
+        {
+            const string ExpectedCurrency = "USD";
+
             var donation = await _context.Donations
                 .Include(d => d.Campaign)
                 .Include(d => d.UserProfile)
@@ -171,11 +220,31 @@ namespace HeartForCharity.Services
             if (donation == null)
                 throw new UserException("Donation order not found.");
 
+            if (donation.UserProfile == null || donation.UserProfile.UserId != _currentUserService.UserId)
+                throw new ForbiddenException("This order does not belong to you.");
+
             if (donation.Status == DonationStatus.Success)
                 return MapToResponse(donation);
 
             if (captureStatus == "COMPLETED")
             {
+                if (capturedAmount.HasValue && capturedAmount.Value != donation.Amount)
+                {
+                    donation.Status = DonationStatus.Failed;
+                    await _context.SaveChangesAsync();
+                    throw new UserException(
+                        $"Captured amount ({capturedAmount.Value}) does not match the recorded donation amount ({donation.Amount}).");
+                }
+
+                if (!string.IsNullOrEmpty(capturedCurrency) &&
+                    !string.Equals(capturedCurrency, ExpectedCurrency, StringComparison.OrdinalIgnoreCase))
+                {
+                    donation.Status = DonationStatus.Failed;
+                    await _context.SaveChangesAsync();
+                    throw new UserException(
+                        $"Captured currency ({capturedCurrency}) does not match the expected currency ({ExpectedCurrency}).");
+                }
+
                 donation.Status              = DonationStatus.Success;
                 donation.PayPalTransactionId = transactionId ?? paypalOrderId;
 
@@ -185,12 +254,21 @@ namespace HeartForCharity.Services
                     campaign.CurrentAmount += donation.Amount;
                     campaign.UpdatedAt      = DateTime.UtcNow;
                 }
-            }
-            else
-            {
-                donation.Status = DonationStatus.Failed;
+
+                await _context.SaveChangesAsync();
+
+                await _bus.PubSub.PublishAsync(new DonationSuccessfulEvent
+                {
+                    DonationId    = donation.DonationId,
+                    UserProfileId = donation.UserProfileId ?? 0,
+                    CampaignTitle = donation.Campaign?.Title ?? string.Empty,
+                    Amount        = donation.Amount
+                });
+
+                return MapToResponse(donation);
             }
 
+            donation.Status = DonationStatus.Failed;
             await _context.SaveChangesAsync();
             return MapToResponse(donation);
         }

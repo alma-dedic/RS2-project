@@ -41,6 +41,9 @@ namespace HeartForCharity.Services.VolunteerApplicationStateMachine
             if (orgProfile == null || application.VolunteerJob.OrganisationProfileId != orgProfile.OrganisationProfileId)
                 throw new ForbiddenException("You can only approve applications for your own volunteer jobs.");
 
+            if (application.VolunteerJob.PositionsFilled >= application.VolunteerJob.PositionsAvailable)
+                throw new UserException("All positions for this volunteer job are already filled.");
+
             application.Status           = ApplicationStatus.Approved;
             application.ReviewedByUserId = _currentUserService.UserId;
             application.ReviewedAt       = DateTime.UtcNow;
