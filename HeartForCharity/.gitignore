@@ -38,8 +38,11 @@ bld/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
-# Uncomment if you have tasks that create the project's static files in wwwroot
-wwwroot/
+# wwwroot — ignoriši sve OSIM seed slike
+wwwroot/**
+!wwwroot/uploads/
+!wwwroot/uploads/public/
+!wwwroot/uploads/public/1ed8f493-ad7f-467a-b094-6b80d3e46c7e.png
 
 # Visual Studio 2017 auto generated files
 Generated\ Files/
