@@ -1,4 +1,5 @@
 using HeartForCharity.Model.Constants;
+using HeartForCharity.Model.Exceptions;
 using HeartForCharity.Model.Requests;
 using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
@@ -32,7 +33,7 @@ namespace HeartForCharity.WebAPI.Controllers
         [NonAction]
         [ApiExplorerSettings(IgnoreApi = true)]
         public override Task<ReviewResponse?> Update(int id, [FromBody] ReviewInsertRequest request)
-            => throw new NotSupportedException("Reviews are immutable; delete and create a new one if needed.");
+            => throw new UserException("Reviews are immutable; delete and create a new one if needed.");
 
         [Authorize(Roles = Roles.Admin)]
         [HttpDelete("{id}")]

@@ -14,7 +14,9 @@ class ReportDialog extends StatefulWidget {
 
 class _ReportDialogState extends State<ReportDialog> {
   _ReportType _selected = _ReportType.donations;
-  bool _isLoading = false;
+  bool _exporting = false;
+  bool _printing = false;
+  bool get _isLoading => _exporting || _printing;
 
   // Donations filters
   DateTime? _fromDate;
@@ -24,7 +26,7 @@ class _ReportDialogState extends State<ReportDialog> {
   String? _campaignStatus;
 
   Future<void> _export() async {
-    setState(() => _isLoading = true);
+    setState(() => _exporting = true);
     try {
       final provider = context.read<ReportProvider>();
       switch (_selected) {
@@ -43,12 +45,12 @@ class _ReportDialogState extends State<ReportDialog> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _exporting = false);
     }
   }
 
   Future<void> _print() async {
-    setState(() => _isLoading = true);
+    setState(() => _printing = true);
     try {
       final provider = context.read<ReportProvider>();
       switch (_selected) {
@@ -66,7 +68,7 @@ class _ReportDialogState extends State<ReportDialog> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _printing = false);
     }
   }
 
@@ -136,7 +138,9 @@ class _ReportDialogState extends State<ReportDialog> {
                   const SizedBox(width: 12),
                   OutlinedButton.icon(
                     onPressed: _isLoading ? null : _print,
-                    icon: const Icon(Icons.print_outlined, size: 16),
+                    icon: _printing
+                        ? SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.primary))
+                        : const Icon(Icons.print_outlined, size: 16),
                     label: const Text('Print'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colorScheme.primary,
@@ -149,7 +153,7 @@ class _ReportDialogState extends State<ReportDialog> {
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
                     onPressed: _isLoading ? null : _export,
-                    icon: _isLoading
+                    icon: _exporting
                         ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.download_outlined, size: 16),
                     label: const Text('Export PDF'),

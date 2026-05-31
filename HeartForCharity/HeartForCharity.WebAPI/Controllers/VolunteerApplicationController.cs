@@ -1,4 +1,5 @@
 using HeartForCharity.Model.Constants;
+using HeartForCharity.Model.Exceptions;
 using HeartForCharity.Model.Requests;
 using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
@@ -43,10 +44,10 @@ namespace HeartForCharity.WebAPI.Controllers
         [NonAction]
         [ApiExplorerSettings(IgnoreApi = true)]
         public override Task<VolunteerApplicationResponse?> Update(int id, [FromBody] VolunteerApplicationInsertRequest request)
-            => throw new NotSupportedException("Use /approve, /reject or /withdraw endpoints.");
+            => throw new UserException("Use /approve, /reject or /withdraw endpoints.");
 
         [NonAction]
-        public override Task<bool> Delete(int id) => throw new NotSupportedException();
+        public override Task<bool> Delete(int id) => throw new UserException("Deletion is not supported.");
 
         [Authorize(Roles = Roles.User)]
         [HttpPatch("{id}/withdraw")]

@@ -1,4 +1,5 @@
 using HeartForCharity.Model.Constants;
+using HeartForCharity.Model.Exceptions;
 using HeartForCharity.Model.Requests;
 using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
@@ -44,7 +45,7 @@ namespace HeartForCharity.WebAPI.Controllers
             => await base.Update(id, request);
 
         [NonAction]
-        public override Task<bool> Delete(int id) => throw new NotSupportedException();
+        public override Task<bool> Delete(int id) => throw new UserException("Deletion is not supported.");
 
         [Authorize(Roles = Roles.Organisation)]
         [HttpPatch("{id}/complete")]

@@ -1,4 +1,5 @@
 using HeartForCharity.Model.Constants;
+using HeartForCharity.Model.Exceptions;
 using HeartForCharity.Model.Requests;
 using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
@@ -62,14 +63,14 @@ namespace HeartForCharity.WebAPI.Controllers
         [NonAction]
         [ApiExplorerSettings(IgnoreApi = true)]
         public override Task<DonationResponse> Create([FromBody] DonationInsertRequest request)
-            => throw new NotSupportedException("Donations are created through /create-order and /capture endpoints (PayPal flow).");
+            => throw new UserException("Donations are created through /create-order and /capture endpoints (PayPal flow).");
 
         [NonAction]
         [ApiExplorerSettings(IgnoreApi = true)]
         public override Task<DonationResponse?> Update(int id, [FromBody] DonationInsertRequest request)
-            => throw new NotSupportedException("Donations are immutable financial records; they cannot be edited.");
+            => throw new UserException("Donations are immutable financial records; they cannot be edited.");
 
         [NonAction]
-        public override Task<bool> Delete(int id) => throw new NotSupportedException();
+        public override Task<bool> Delete(int id) => throw new UserException("Deletion is not supported.");
     }
 }

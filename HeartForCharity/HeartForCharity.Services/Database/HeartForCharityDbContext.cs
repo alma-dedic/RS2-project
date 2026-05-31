@@ -57,10 +57,12 @@ namespace HeartForCharity.Services.Database
                 .HasIndex(u => u.Username)
                 .IsUnique();
 
-            // Jedan korisnik ne može se prijaviti dva puta na isti posao
+            // Jedan korisnik ne može imati dvije aktivne prijave na isti posao.
+            // Withdrawn (=3) je izvan uniquosti — dozvoljava reapply nakon withdraw-a.
             modelBuilder.Entity<VolunteerApplication>()
                 .HasIndex(va => new { va.VolunteerJobId, va.UserProfileId })
-                .IsUnique();
+                .IsUnique()
+                .HasFilter("[Status] <> 3");
 
             // Isti korisnik ne može imati duplu vještinu
             modelBuilder.Entity<VolunteerSkill>()

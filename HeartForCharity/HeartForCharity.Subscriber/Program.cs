@@ -6,7 +6,17 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-DotNetEnv.Env.TraversePath().Load();
+var searchDir = AppContext.BaseDirectory;
+while (searchDir != null)
+{
+    var candidate = Path.Combine(searchDir, "HeartForCharity.WebAPI", ".env");
+    if (File.Exists(candidate))
+    {
+        DotNetEnv.Env.Load(candidate);
+        break;
+    }
+    searchDir = Directory.GetParent(searchDir)?.FullName;
+}
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Configuration.AddEnvironmentVariables();

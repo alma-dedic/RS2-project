@@ -4,6 +4,7 @@ using HeartForCharity.Services.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HeartForCharity.Services.Migrations
 {
     [DbContext(typeof(HeartForCharityDbContext))]
-    partial class HeartForCharityDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260530170549_AllowReapplyAfterWithdraw")]
+    partial class AllowReapplyAfterWithdraw
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -1,4 +1,5 @@
 using HeartForCharity.Model.Constants;
+using HeartForCharity.Model.Exceptions;
 using HeartForCharity.Model.Requests;
 using HeartForCharity.Model.Responses;
 using HeartForCharity.Model.SearchObjects;
@@ -36,7 +37,7 @@ namespace HeartForCharity.WebAPI.Controllers
         [NonAction]
         [ApiExplorerSettings(IgnoreApi = true)]
         public override Task<UserResponse> Create([FromBody] UserInsertRequest request)
-            => throw new NotSupportedException("Use /api/user/register-user or /api/user/register-organisation.");
+            => throw new UserException("Use /api/user/register-user or /api/user/register-organisation.");
 
         [AllowAnonymous]
         [HttpPost("register-user")]
